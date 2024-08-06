@@ -100,7 +100,7 @@
                 </table>
             </div>
             <div class="text-right">
-                <button type="submit" id="deleteButton" class="btn btn-danger mt-2" disabled>Удалить выбранные сообщения</button>
+                <button type="submit" id="deleteButton" class="btn btn-danger mt-2" onclick="confirmDeletion(event)" disabled>Удалить выбранные сообщения</button>
             </div>
         </form>
         {% else %}
@@ -112,6 +112,12 @@
 </div>
 {% include 'footer.html' %}
 <script>
+    function confirmDeletion(event) {
+            if (!confirm('Вы уверены, что хотите удалить выбранные сообщения?')) {
+                event.preventDefault();
+            }
+        }
+
     document.getElementById('select_all').addEventListener('click', function(event) {
         const checkboxes = document.querySelectorAll('input[name="selected_messages"]');
         checkboxes.forEach(checkbox => checkbox.checked = event.target.checked);
