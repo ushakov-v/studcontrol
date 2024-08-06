@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Контроль посещаемости</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .title-center {
+                font-size: 28px;
+                text-align: center;
+            }
+
+            .table th, .table td {
+                font-size: 14px;
+                padding: 5px;
+            }
+
+            .action-buttons a {
+                margin-bottom: 5px;
+                width: 100%;
+                text-align: center;
+            }
+
+            .table .btn {
+                margin-bottom: 10px;
+            }
+
+            .fixed-button {
+                position: static;
+                width: 196px;
+                display: inline-block;
+                text-align: right;
+                margin-top: 20px;
+                margin-left: auto;
+                margin-right: 4%;
+            }
+
+            .form-row {
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            .custom-save-button {
+                margin-bottom: 10px;
+            }
+
+            .form-group.col-md-4 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+    <script>
+        function updateSubjects() {
+            const semester = document.getElementById('semester').value;
+            const subgroup = document.getElementById('subgroup').value;
+            const subject = document.getElementById('subject').value;
+            const date = document.getElementById('date').value;
+            const userId = '{{ user_id }}';
+            window.location.href = `/attendance?semester=${semester}&subgroup=${subgroup}&subject=${subject}&date=${date}&user_id=${userId}`;
+        }
+
+        function capitalizeTopic() {
+            const topicField = document.getElementById('topic');
+            let topicValue = topicField.value.trim();
+            if (topicValue.length > 0) {
+                topicField.value = topicValue.charAt(0).toUpperCase() + topicValue.slice(1);
+            }
+        }
+
+        function checkRemoteLearning(studentId) {
+            const date = document.getElementById('date').value;
+            const remoteLearningDates = {{ remote_learning_dates|tojson }};
+            const studentRemoteDates = remoteLearningDates[studentId] || [];
+            const currentDate = new Date(date);
+
+            for (const period of studentRemoteDates) {
+                const startDate = new Date(period.start_date);
+                const endDate = new Date(period.end_date);
+                if (currentDate >= startDate && currentDate <= endDate) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    </script>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <h1 class="title-center">Добавить посещаемость</h1>
+        {% if success_message %}
+        <div class="alert alert-success" role="alert">
+            {{ success_message }}
+        </div>
+        {% endif %}
+        {% if current_user.role != 'student' %}
+        <form method="POST" class="mb-5" action="{{ url_for('attendance') }}">
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="semester">Учебный семестр</label>
+                    <select id="semester" name="semester" class="form-control form-control-static-width" onchange="updateSubjects()" required>
+                        <option value="">Выберите учебный семестр</option>
+                        {% for i in range(1, total_semesters + 1) %}
+                        <option value="{{ i }}" {% if i == selected_semester %}selected{% endif %}>Семестр {{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="subject">Название предмета</label>
+                    <select id="subject" name="subject" class="form-control form-control-static-width" required>
+                        {% for subject in subjects %}
+                        <option value="{{ subject.id }}" {% if subject.id == selected_subject %}selected{% endif %}>{{ subject.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="subgroup">Подгруппа</label>
+                    <select id="subgroup" name="subgroup" class="form-control form-control-static-width" onchange="updateSubjects()" required>
+                        <option value="all" {% if selected_subgroup == 'all' %}selected{% endif %}>Вся группа</option>
+                        <option value="subgroup1" {% if selected_subgroup == 'subgroup1' %}selected{% endif %}>Подгруппа 1</option>
+                        <option value="subgroup2" {% if selected_subgroup == 'subgroup2' %}selected{% endif %}>Подгруппа 2</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="activity">Тип занятия</label>
+                    <select id="activity" name="activity" class="form-control">
+                        <option value="lecture">Лекция</option>
+                        <option value="practice">Практическое занятие</option>
+                        <option value="laboratory">Лабораторное занятие</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="date">Дата</label>
+                    <input type="date" id="date" name="date" class="form-control" value="{{ date }}" onchange="updateSubjects()" required min="{{ start_date }}" max="{{ end_date }}">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="study_time">Время проведения занятия</label>
+                    <select id="study_time" name="study_time" class="form-control">
+                        <option value="1">08:30 - 10:00</option>
+                        <option value="2">10:10 - 11:40</option>
+                        <option value="3">11:50 - 13:20</option>
+                        <option value="4">14:00 - 15:30</option>
+                        <option value="5">15:40 - 17:10</option>
+                        <option value="6">17:20 - 18:50</option>
+                        <option value="7">19:00 - 20:30</option>
+                        <option value="8">20:40 - 22:10</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="topic">Тема занятия</label>
+                <input type="text" class="form-control" id="topic" name="topic" onblur="capitalizeTopic()" required>
+            </div>
+            <br><br>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th style="width: 380px;">ФИО студента</th>
+                    <th style="width: 170px;">Подгруппа</th>
+                    <th style="width: 560px;">Присутствие</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for student in students %}
+                <tr class="{% if student.expelled %}expelled{% endif %}">
+                    <td>{{ student.name }}</td>
+                    <td>
+                        {% if student.subgroup == 'whole_group' %}
+                        Вся группа
+                        {% elif student.subgroup == 'subgroup1' %}
+                        Подгруппа 1
+                        {% elif student.subgroup == 'subgroup2' %}
+                        Подгруппа 2
+                        {% else %}
+                        Неизвестная подгруппа
+                        {% endif %}
+                    </td>
+                    <td>
+                        <script>
+                            if (checkRemoteLearning({{ student.id }})) {
+                                document.write(`
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="status_{{ student.id }}" id="remote_{{ student.id }}" value="Remote" checked>
+                                                    <label class="form-check-label" for="remote_{{ student.id }}">Дистанционное обучение</label>
+                                                </div>
+                                            `);
+                            } else {
+                                document.write(`
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="status_{{ student.id }}" id="present_{{ student.id }}" value="Present" checked>
+                                                    <label class="form-check-label" for="present_{{ student.id }}">Присутствовал</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="status_{{ student.id }}" id="excused_{{ student.id }}" value="Excused">
+                                                    <label class="form-check-label" for="excused_{{ student.id }}">Уважительная причина</label>
+                                                </div>
+                                                <div class="form-check form-check-inline">
+                                                    <input class="form-check-input" type="radio" name="status_{{ student.id }}" id="absent_{{ student.id }}" value="Absent">
+                                                    <label class="form-check-label" for="absent_{{ student.id }}">Отсутствовал</label>
+                                                </div>
+                                            `);
+                            }
+                        </script>
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            <div class="d-flex justify-content float-right mt-2">
+                <button type="submit" class="btn btn-primary custom-save-button float-right mr-2">Сохранить посещаемость</button>
+                <a href="{{ request.referrer if request.referrer else url_for('index') }}" class="btn btn-secondary">Назад</a>
+            </div>
+
+        </form>
+        {% else %}
+        <div class="alert alert-warning" role="alert">
+            У вас нет прав на выполнение этого действия.
+        </div>
+        {% endif %}
+    </div>
+    {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
+    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору группы</a>
+    {% endif %}
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

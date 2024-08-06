@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перевод на дистанционное обучение</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 28px !important;
+            }
+
+            .container {
+                padding: 15px;
+            }
+        }
+        body {
+            background-color: #f8f9fa !important;
+        }
+
+        .container {
+            max-width: 600px !important;
+        }
+
+        .card {
+            background-color: #ffffff !important;
+            border: none !important;
+            border-radius: 10px !important;
+        }
+
+        h1 {
+            font-family: 'Roboto', sans-serif !important;
+            font-weight: 700 !important;
+        }
+
+        .form-control {
+            border-radius: 5px !important;
+        }
+
+        .btn-primary, .btn-secondary {
+            border-radius: 5px !important;
+            transition: background-color 0.3s, border-color 0.3s !important;
+        }
+
+        .btn-primary {
+            background-color: #007bff !important;
+            border-color: #007bff !important;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3 !important;
+            border-color: #004085 !important;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d !important;
+            border-color: #6c757d !important;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268 !important;
+            border-color: #545b62 !important;
+        }
+
+        .btn-block + .btn-block {
+            margin-top: 10px !important;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const remoteLearningDates = {{ remote_learning_dates_json|safe }};
+            const semesterSelect = document.getElementById('semester');
+            const startDateInput = document.getElementById('start_date');
+            const endDateInput = document.getElementById('end_date');
+
+            function updateDates() {
+                const selectedSemester = semesterSelect.value;
+                const period = remoteLearningDates.find(period => period.semester == selectedSemester);
+                if (period) {
+                    startDateInput.value = period.start_date;
+                    endDateInput.value = period.end_date;
+                } else {
+                    startDateInput.value = '';
+                    endDateInput.value = '';
+                }
+            }
+
+            semesterSelect.addEventListener('change', updateDates);
+            updateDates();
+        });
+    </script>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <div class="card shadow-lg p-4">
+            <h1 class="text-center mb-4">Перевод на дистанционное обучение</h1>
+            <form method="post">
+                <div class="form-group">
+                    <label for="semester">Семестр</label>
+                    <select class="form-control" id="semester" name="semester" required>
+                        {% for i in range(1, total_semesters + 1) %}
+                        <option value="{{ i }}">Семестр {{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="start_date">Дата начала</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" required>
+                </div>
+                <div class="form-group">
+                    <label for="end_date">Дата окончания</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block mt-4">Сохранить</button>
+                <a href="{{ url_for('view_student', student_id=student.id, user_id=user_id) }}" class="btn btn-secondary btn-block">Отменить</a>
+                {% if student.remote_learning %}
+                <button type="submit" class="btn btn-danger btn-block" name="remove_remote_learning">Вывести из дистанционного обучения</button>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

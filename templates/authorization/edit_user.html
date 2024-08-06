@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактировать пользователя</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title-center {
+                font-size: 28px;
+                text-align: center;
+            }
+
+            .form-group, .form-row .form-group {
+                margin-bottom: 10px;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .form-group.col-md-6 {
+                width: 100%;
+            }
+
+            .d-flex {
+                width: 100%;
+                flex-direction: column;
+            }
+
+            .d-flex .btn {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .d-flex .btn:last-child {
+                margin-bottom: 0;
+            }
+        }
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 600px !important;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        h1 {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 700;
+        }
+
+        .btn-group {
+            margin-top: 15px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .tooltip-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            line-height: 20px;
+            cursor: pointer;
+            margin-left: 5px;
+            position: relative;
+        }
+
+        .tooltip-icon:hover .tooltip-text {
+            display: block;
+        }
+
+        .tooltip-text {
+            display: none;
+            width: 200px;
+            background-color: #6c757d;
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Позиционирование сверху */
+            left: 50%;
+            margin-left: -100px;
+        }
+
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%; /* Снизу элемента tooltip */
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #6c757d transparent transparent transparent;
+        }
+    </style>
+    <script>
+        const institutesCaptains = {{ institutes_captains | tojson }};
+
+        function capitalizeName() {
+            const nameField = document.getElementById('full_name');
+            let nameValue = nameField.value.trim();
+
+            let parts = nameValue.split(/([-\s])/);
+
+            for (let i = 0; i < parts.length; i++) {
+                if (parts[i] !== '-' && parts[i] !== ' ') {
+                    parts[i] = parts[i].charAt(0).toUpperCase() + parts[i].slice(1).toLowerCase();
+                }
+            }
+
+            nameField.value = parts.join('');
+        }
+
+        function updateCaptains() {
+            const institute = document.getElementById('instituteFilter').value;
+            const captainsSelect = document.getElementById('captain_id');
+            captainsSelect.innerHTML = '';
+
+            if (institutesCaptains[institute]) {
+                institutesCaptains[institute].forEach(captain => {
+                    const option = document.createElement('option');
+                    option.value = captain.id;
+                    option.text = captain.full_name;
+                    captainsSelect.appendChild(option);
+                });
+            }
+
+            updateGroupAndDates();
+        }
+
+        function updateGroupAndDates() {
+            const captainId = document.getElementById('captain_id').value;
+            let selectedCaptain;
+            Object.values(institutesCaptains).forEach(captains => {
+                const captain = captains.find(captain => captain.id == captainId);
+                if (captain) {
+                    selectedCaptain = captain;
+                }
+            });
+
+            if (selectedCaptain) {
+                document.getElementById('group').value = selectedCaptain.group;
+                document.getElementById('start_date').value = selectedCaptain.start_date;
+                document.getElementById('end_date').value = selectedCaptain.end_date;
+            }
+        }
+
+        function toggleFields() {
+            const role = document.getElementById('role').value;
+            const studentFields = document.querySelectorAll('.student-field');
+            const editableFields = document.querySelectorAll('.editable-field');
+            const chiefFields = document.querySelectorAll('.chief-field');
+            const adminFields = document.querySelectorAll('.admin-field');
+            const groupField = document.getElementById('group');
+            const startDateField = document.getElementById('start_date');
+            const endDateField = document.getElementById('end_date');
+
+            studentFields.forEach(field => {
+                field.classList.toggle('hidden', role !== 'student');
+            });
+
+            editableFields.forEach(field => {
+                field.classList.toggle('hidden', role === 'chief' || role === 'student' || role === 'admin');
+            });
+
+            chiefFields.forEach(field => {
+                field.classList.toggle('hidden', role !== 'chief');
+            });
+
+            adminFields.forEach(field => {
+                field.classList.toggle('hidden', role === 'admin');
+            });
+
+            if (role === 'chief') {
+                groupField.value = 'Без группы';
+                startDateField.value = '';
+                endDateField.value = '';
+            } else if (role === 'student') {
+                updateGroupAndDates();
+            } else if (role === 'admin') {
+                document.getElementById('instituteFilter').value = 'admin';
+                groupField.value = 'admin';
+                startDateField.value = '2024-01-01';
+                endDateField.value = '2025-12-31';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('instituteFilter').addEventListener('change', updateCaptains);
+            document.getElementById('captain_id').addEventListener('change', updateGroupAndDates);
+            document.getElementById('role').addEventListener('change', toggleFields);
+
+            toggleFields();  // Call once to set initial visibility
+            updateCaptains();
+        });
+    </script>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <div class="card">
+            <h1 class="title-center mb-4">Редактировать пользователя</h1>
+            {% if message %}
+            <div class="alert alert-{{ message_type }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            {% endif %}
+            <form method="POST">
+                <div class="form-group">
+                    <label for="full_name">ФИО</label>
+                    <input type="text" class="form-control" id="full_name" name="full_name" value="{{ user.full_name }}" onblur="capitalizeName()">
+                </div>
+                <div class="form-group">
+                    <label for="email">E-mail</label>
+                    <input type="text" class="form-control" id="email" name="email" value="{{ user.email }}">
+                </div>
+                <div class="form-group">
+                    <label for="role">Роль</label>
+                    <select class="form-control" id="role" name="role">
+                        <option value="admin" {% if user.role == 'admin' %} selected {% endif %}>Администратор</option>
+                        <option value="captain" {% if user.role == 'captain' %} selected {% endif %}>Староста</option>
+                        <option value="chief" {% if user.role == 'chief' %} selected {% endif %}>Заведующий</option>
+                        <option value="student" {% if user.role == 'student' %} selected {% endif %}>Студент</option>
+                    </select>
+                </div>
+                <div class="form-group admin-field hidden">
+                    <label for="instituteFilter">Институт:</label>
+                    <select class="form-control" id="instituteFilter" name="institute">
+                        <option value="institute_1" {% if user.institute=="institute_1" %} selected{% endif %}>Институт информационных технологий</option>
+                        <option value="institute_2" {% if user.institute=="institute_2" %} selected {% endif %}>Институт ядерной энергии и промышленности</option>
+                        <option value="institute_3" {% if user.institute=="institute_3" %} selected {% endif %}>Юридический институт</option>
+                        <option value="institute_4" {% if user.institute=="institute_4" %} selected {% endif %}>Морской институт</option>
+                        <option value="institute_5" {% if user.institute=="institute_5" %} selected {% endif %}>Институт радиоэлектроники и интеллектуальных технических систем</option>
+                        <option value="institute_6" {% if user.institute=="institute_6" %} selected {% endif %}>Институт финансов, экономики и управления</option>
+                        <option value="institute_7" {% if user.institute=="institute_7" %} selected {% endif %}>Политехнический институт</option>
+                        <option value="institute_8" {% if user.institute=="institute_8" %} selected {% endif %}>Институт общественных наук и международных отношений</option>
+                        <option value="institute_9" {% if user.institute=="institute_9" %} selected {% endif %}>Гуманитарно-педагогический институт</option>
+                        <option value="institute_10" {% if user.institute=="institute_10" %} selected {% endif %}>Институт фундаментальной медицины и здоровьесбережения</option>
+                        <option value="institute_11" {% if user.institute=="institute_11" %} selected {% endif %}>Институт развития города</option>
+                        <option value="institute_12" {% if user.institute=="institute_12" %} selected {% endif %}>Институт перспективных исследований</option>
+                    </select>
+                </div>
+                <div class="form-group student-field hidden">
+                    <label for="captain_id">Староста группы:</label>
+                    <select class="form-control" id="captain_id" name="captain_id"></select>
+                </div>
+                <div class="form-group editable-field hidden">
+                    <label for="group">Учебная группа</label>
+                    <input type="text" class="form-control" id="group" name="group" value="{{ user.group }}">
+                </div>
+                <div class="form-group student-field hidden">
+                    <label for="group">Учебная группа</label>
+                    <input type="text" class="form-control" id="group" name="group" value="{{ user.group }}" readonly>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6 editable-field hidden">
+                        <label for="start_date">Начало обучения</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ user.start_date }}">
+                    </div>
+                    <div class="form-group col-md-6 editable-field hidden">
+                        <label for="end_date">Конец обучения
+                            <span class="tooltip-icon">?
+                                <span class="tooltip-text">
+                                    Даты нужны для подсчёта количества семестров<br><br>
+                                    Пример для бакалавриата:<br>
+                                    01.09.2021 - 31.08.2025<br><br>
+                                    Пример для специалитета:<br>
+                                    01.09.2021 - 31.08.2026<br><br>
+                                    Пример для магистратуры:<br>
+                                    01.09.2021 - 31.08.2023
+                                </span>
+                            </span>
+                        </label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ user.end_date }}">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6 student-field hidden">
+                        <label for="start_date">Начало обучения</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ user.start_date }}" readonly>
+                    </div>
+                    <div class="form-group col-md-6 student-field hidden">
+                        <label for="end_date">Конец обучения
+                            <span class="tooltip-icon">?
+                                <span class="tooltip-text">
+                                    Даты нужны для подсчёта количества семестров<br><br>
+                                    Пример для бакалавриата:<br>
+                                    01.09.2021 - 31.08.2025<br><br>
+                                    Пример для специалитета:<br>
+                                    01.09.2021 - 31.08.2026<br><br>
+                                    Пример для магистратуры:<br>
+                                    01.09.2021 - 31.08.2023
+                                </span>
+                            </span>
+                        </label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ user.end_date }}" readonly>
+                    </div>
+                </div>
+                <div class="d-flex justify-content float-right mt-4">
+                    <button type="submit" class="btn btn-primary mr-2">Сохранить изменения</button>
+                    <a href="{{ url_for('user_list') }}" class="btn btn-secondary">Назад</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% include 'footer.html' %}
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

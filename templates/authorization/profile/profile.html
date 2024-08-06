@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль пользователя</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title-center {
+                font-size: 28px;
+            }
+
+            .flex-row .btn {
+                display: block;
+                width: 100%;
+                margin-bottom: 10px; /* Отступ между кнопками */
+            }
+
+            .flex-row {
+                display: block !important;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .form-no-margin-bottom {
+                margin-bottom: 10px;
+                margin-right: 0 !important;
+
+            }
+        }
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 600px !important;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        h1 {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 700;
+        }
+
+        p {
+            margin-bottom: 5px;
+        }
+
+        .form-no-margin-bottom {
+            margin-bottom: 0;
+            margin-right: 8px;
+        }
+
+        /* Custom Flexbox Styles */
+        .flex-container {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .flex-row {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+    </style>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <div class="card">
+            <h1 class="title-center">Профиль пользователя</h1>
+            <p><strong>ФИО:</strong> {{ user.full_name }}</p>
+            <p><strong>E-mail:</strong> {{ user.email }}</p>
+            <p><strong>Роль:</strong>
+                {% if user.role == 'student' %}
+                Студент
+                {% elif user.role == 'captain' %}
+                Староста
+                {% elif user.role == 'chief' %}
+                Заведующий
+                {% elif user.role == 'admin' %}
+                Администратор
+                {% else %}
+                Неизвестная роль
+                {% endif %}
+            </p>
+            <p><strong>Институт:</strong>
+                {% if user.institute == "institute_1" %}
+                Институт информационных технологий
+                {% elif user.institute == "institute_2" %}
+                Институт ядерной энергии и промышленности
+                {% elif user.institute == "institute_3" %}
+                Юридический институт
+                {% elif user.institute == "institute_4" %}
+                Морской институт
+                {% elif user.institute == "institute_5" %}
+                Институт радиоэлектроники и интеллектуальных технических систем
+                {% elif user.institute == "institute_6" %}
+                Институт финансов, экономики и управления
+                {% elif user.institute == "institute_7" %}
+                Политехнический институт
+                {% elif user.institute == "institute_8" %}
+                Институт общественных наук и международных отношений
+                {% elif user.institute == "institute_9" %}
+                Гуманитарно-педагогический институт
+                {% elif user.institute == "institute_10" %}
+                Институт фундаментальной медицины и здоровьесбережения
+                {% elif user.institute == "institute_11" %}
+                Институт развития города
+                {% elif user.institute == "institute_12" %}
+                Институт перспективных исследований
+                {% else %}
+                Неизвестный институт
+                {% endif %}
+            </p>
+            {% if user.role == 'student' and group_leader %}
+            <p><strong>Староста группы:</strong> {{ group_leader.full_name }}</p>
+            {% endif %}
+            {% if user.role != 'chief' %}
+            {% if user.group %}
+            <p><strong>Учебная группа:</strong> {{ user.group }}</p>
+            {% endif %}
+            {% if user.start_date %}
+            <p><strong>Начало обучения:</strong> {{ user.start_date.strftime('%d.%m.%Y') }}</p>
+            {% endif %}
+            {% if user.end_date %}
+            <p><strong>Конец обучения:</strong> {{ user.end_date.strftime('%d.%m.%Y') }}</p>
+            {% endif %}
+            {% endif %}
+            <div class="flex-container">
+                <div class="flex-row mt-3 mb-3 w-100">
+                    <form method="post" action="{{ url_for('delete_profile') }}" onsubmit="return confirm('Вы уверены, что хотите удалить свой профиль?');" class="form-no-margin-bottom">
+                        <button type="submit" class="btn btn-danger">Удалить профиль</button>
+                    </form>
+                    <a href="{{ url_for('edit_profile') }}" class="btn btn-warning flex-fill mr-2">Редактировать профиль</a>
+                    <a href="{{ url_for('change_password_request') }}" class="btn btn-info">Сменить пароль</a>
+                </div>
+                <div class="flex-row w-100">
+                    <a href="{{ url_for('logout') }}" class="btn btn-primary flex-fill mr-2">Выйти</a>
+                    <a href="{{ request.referrer if request.referrer else url_for('index') }}" class="btn btn-secondary flex-fill">Назад</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчёт по посещаемости за день</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                max-width: 100%;
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .title-center {
+                font-size: 28px;
+                text-align: center;
+            }
+
+            .table-bordered {
+                overflow-x: scroll;
+                width: 100%;
+            }
+
+            th.wide-column {
+                min-width: 150px;
+            }
+
+            .fixed-button {
+                position: static;
+                width: 196px;
+                display: inline-block;
+                text-align: right;
+                margin-top: 20px;
+                margin-left: auto;
+                margin-right: 4%;
+            }
+        }
+        .attendance-column {
+            width: 150px;
+            text-align: center;
+        }
+    </style>
+    <script>
+        function updateDays() {
+            const week = document.getElementById('week').value;
+            const days = document.getElementById('days');
+            const selectedDay = days.value;
+            days.innerHTML = '';
+            if (week) {
+                const daysOfWeek = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'];
+                const weekDates = JSON.parse(document.getElementById('weekDates').dataset.dates);
+                if (weekDates[week]) {
+                    weekDates[week].forEach((date, index) => {
+                        const option = document.createElement('option');
+                        option.value = index + 1;
+                        option.text = daysOfWeek[index] + ' (' + date + ')';
+                        if (option.value == selectedDay) {
+                            option.selected = true;
+                        }
+                        days.add(option);
+                    });
+                }
+            }
+        }
+
+        function updateSemesters() {
+            const semester = document.getElementById('semester').value;
+            const userId = '{{ user_id }}';
+            window.location.href = '/subject_week_attendance?semester=' + semester + '&user_id=' + userId;
+        }
+    </script>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <h1 class="title-center">Отчёт по посещаемости за день</h1>
+        <form action="" method="get">
+            <input type="hidden" name="user_id" value="{{ user_id }}">
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="semester">Выберите семестр:</label>
+                    <select id="semester" name="semester" class="form-control" onchange="updateSemesters()">
+                        <option value="">-- Выберите семестр --</option>
+                        {% for i in range(1, total_semesters + 1) %}
+                        <option value="{{ i }}" {% if i == selected_semester %}selected{% endif %}>Семестр {{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="week">Выберите неделю:</label>
+                    <select id="week" name="week" class="form-control" onchange="updateDays(); this.form.submit()">
+                        <option value="">-- Выберите неделю --</option>
+                        {% for week, date_range in week_ranges %}
+                        <option value="{{ week }}" {% if week == selected_week %}selected{% endif %}>Неделя {{ loop.index }} ({{ date_range }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="days">Выберите день недели:</label>
+                    <select id="days" name="day" class="form-control" onchange="this.form.submit()">
+                        <option value="">-- Выберите день --</option>
+                        {% if selected_week %}
+                        {% for i in range(1, 8) %}
+                        <option value="{{ i }}" {% if i == selected_day %}selected{% endif %}>{{ ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье'][i-1] }} ({{ week_dates[selected_week][i-1] }})</option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        {% if attendance_data %}
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead>
+                <tr>
+                    <th class="vertical-align-center wide-column" rowspan="2">Студент</th>
+                    {% for subject in displayed_subjects %}
+                    <th class="text-center" colspan="{{ subject_max_columns[subject] }}">{{ subject }}</th>
+                    {% endfor %}
+                </tr>
+                <tr>
+                    {% for subject in displayed_subjects %}
+                    {% for key, subgroups in subject_details[subject].items() %}
+                    <th class="attendance-column">
+                        {% if key[1] == 'lecture' %}
+                        Л
+                        {% elif key[1] == 'practice' %}
+                        ПЗ
+                        {% elif key[1] == 'laboratory' %}
+                        ЛЗ
+                        {% else %}
+                        Неизвестный тип занятия
+                        {% endif %}
+                        {% if subgroups|length > 1 or 'whole_group' in subgroups %}
+                        (Вся группа)
+                        {% elif 'subgroup1' in subgroups %}
+                        (Подгр. 1)
+                        {% elif 'subgroup2' in subgroups %}
+                        (Подгр. 2)
+                        {% endif %} <br>
+                        {% if key[2] == '1' %}
+                        (8:30 - 10:00)
+                        {% elif key[2] == '2' %}
+                        (10:10 - 11:40)
+                        {% elif key[2] == '3' %}
+                        (11:50 - 13:20)
+                        {% elif key[2] == '4' %}
+                        (14:00 - 15:30)
+                        {% elif key[2] == '5' %}
+                        (15:40 - 17:10)
+                        {% elif key[2] == '6' %}
+                        (17:20 - 18:50)
+                        {% elif key[2] == '7' %}
+                        (19:00 - 20:30)
+                        {% elif key[2] == '8' %}
+                        (20:40 - 22:10)
+                        {% else %}
+                        (Неизвестное время проведения занятия)
+                        {% endif %}
+                    </th>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                </thead>
+                <tbody>
+                {% for student_attendance in attendance_data %}
+                <tr>
+                    <td>{{ student_attendance.student_name }}</td>
+                    {% for subject in displayed_subjects %}
+                    {% set subject_records = student_attendance['attendance_records'] | selectattr('subject', 'equalto', subject) | list %}
+                    {% for key, subgroups in subject_details[subject].items() %}
+                    <td class="text-center" style="vertical-align: middle;">
+                        {% set record = subject_records | selectattr('activity', 'equalto', key[1]) | selectattr('study_time', 'equalto', key[2]) | selectattr('subgroup', 'in', subgroups) | first %}
+                        {% if record %}
+                            {% if record.status == 'Absent' %}
+                            Н
+                            {% elif record.status == 'Excused' %}
+                            УП
+                            {% elif record.status == 'Remote' %}
+                            ДО
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+            Нет данных о пропусках за выбранную дату.
+        </div>
+        {% endif %}
+    </div>
+
+    {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
+    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору группы</a>
+    {% endif %}
+</div>
+{% include 'footer.html' %}
+<script>
+    document.addEventListener("DOMContentLoaded", updateDays);
+</script>
+<div id="weekDates" data-dates='{{ week_dates | tojson | safe }}'></div>
+</body>
+</html>

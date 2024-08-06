@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Ошибка</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .btn-container {
+                justify-content: flex-end;
+            }
+        }
+        .btn-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <div class="alert alert-danger">
+            <h1 class="alert-heading">Ошибка</h1>
+            <p>{{ message }}</p>
+            <hr>
+            <div class="btn-container">
+                <a href="{{ request.referrer if request.referrer else url_for('index') }}" class="btn btn-secondary">Назад</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

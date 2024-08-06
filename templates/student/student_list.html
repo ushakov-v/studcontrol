@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Список студентов</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .form-group-column-center, .center-button {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .full-width {
+                width: 100%;
+                text-align: center;
+            }
+
+            .title-center {
+                font-size: 28px;
+            }
+
+            .custom-button {
+                margin-top: 10px;
+                text-align: center;
+                margin-left: 0;
+            }
+
+            .table th, .table td {
+                font-size: 14px;
+                padding: 5px;
+            }
+
+            .table-container {
+                overflow-x: auto;
+                max-width: 100%;
+            }
+
+            .action-buttons a {
+                margin-bottom: 5px;
+                width: 100%;
+                text-align: center;
+            }
+
+            .table-fixed {
+                max-width: 100%;
+            }
+
+            .table .btn {
+                margin-bottom: 10px;
+            }
+
+            .fixed-button {
+                position: static;
+                width: 196px;
+                display: inline-block;
+                text-align: right;
+                margin-top: 20px;
+                margin-left: auto;
+                margin-right: 4%;
+            }
+        }
+        .tooltip-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            line-height: 20px;
+            cursor: pointer;
+            margin-left: 5px;
+            position: relative;
+        }
+
+        .tooltip-icon:hover .tooltip-text {
+            display: block;
+        }
+
+        .tooltip-text {
+            display: none;
+            width: 200px;
+            background-color: #6c757d;
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Позиционирование сверху */
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%; /* Снизу элемента tooltip */
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px;
+            border-style: solid;
+            border-color: #6c757d transparent transparent transparent;
+        }
+
+        .center-button {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .tooltip-icon {
+            margin-left: 10px;
+        }
+    </style>
+    <script>
+        function updateSemester() {
+            const semester = document.getElementById('semester').value;
+            const userId = '{{ user_id }}';
+            window.location.href = `?semester=${semester}&user_id=${userId}`;
+        }
+
+        function confirmDeletion(event) {
+            if (!confirm('Вы уверены, что хотите удалить этого студента из базы данных?')) {
+                event.preventDefault();
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5 mb-5">
+        {% if message %}
+        <div class="alert alert-danger" role="alert">
+            {{ message }}
+        </div>
+        {% endif %}
+        <h1 class="title-center">Список студентов</h1>
+        <div class="form-group-column-center">
+            <label for="semester">Семестр:</label>
+            <select id="semester" name="semester" class="form-control" onchange="updateSemester()">
+                {% for i in range(1, total_semesters + 1) %}
+                <option value="{{ i }}" {% if i == selected_semester %}selected{% endif %}>Семестр {{ i }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if is_owner_or_admin %}
+        <a href="{{ url_for('add_student', semester=selected_semester, user_id=user_id) }}" class="btn btn-success mb-3 mt-5 custom-button">Добавить студента</a>
+        {% else %}
+        <div style="margin-bottom: 3rem;"></div>
+        {% endif %}
+        <div class="table-container">
+            {% if students %}
+            <table class="table table-fixed">
+                <thead>
+                <tr>
+                    <th style="width: 46px;">№</th>
+                    <th style="width: 374px;">ФИО студента</th>
+                    <th style="width: 380px;">Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for student in students %}
+                <tr class="{% if student.remote_learning %}remote-learning{% endif %} {% if student.expelled %}expelled{% endif %}">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ student.name }}</td>
+                    <td>
+                        <a href="{{ url_for('view_student', student_id=student.id, user_id=user_id) }}" class="btn btn-primary mr-2">Подробнее</a>
+                        {% if is_owner_or_admin %}
+                        <a href="{{ url_for('edit_student', student_id=student.id, semester=selected_semester, user_id=user_id) }}" class="btn btn-info mr-2">Редактировать</a>
+                        <a href="{{ url_for('delete_student', student_id=student.id, semester=selected_semester, user_id=user_id) }}" class="btn btn-danger" onclick="confirmDeletion(event)">Удалить</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-info full-width" role="alert">
+                В списке пока нет студентов.
+            </div>
+            {% endif %}
+        </div>
+        {% if is_owner_or_admin %}
+        <div class="center-button">
+            <a href="{{ url_for('transfer_students_to_next_semester', current_semester=selected_semester, user_id=user_id) }}" class="btn btn-primary mt-3 {% if not can_transfer %}disabled{% endif %}" id="transfer-button">Перенести студентов в следующий семестр</a>
+            {% if not can_transfer %}
+            <span class="tooltip-icon mt-3">?
+                <span class="tooltip-text">
+                    Кнопка станет активна по окончании семестра
+                </span>
+            </span>
+            {% endif %}
+        </div>
+        {% else %}
+        <div style="margin-top: 3rem;"></div>
+        {% endif %}
+    </div>
+    {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
+    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору группы</a>
+    {% endif %}
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

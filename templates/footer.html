@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Footer</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        @media (max-width: 768px) {
+            .footer {
+                padding: 1rem;
+            }
+            .footer .row {
+                margin: 0;
+            }
+            .footer .separator {
+                display: none;
+            }
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 1rem 0;
+            width: 100%;
+            text-align: center;
+        }
+        .footer a {
+            color: #007bff;
+        }
+        .footer p {
+            margin-bottom: 0;
+        }
+        .container {
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="footer py-2 bg-light">
+        <div class="container">
+            <div class="row">
+                <div class="col text-center">
+                    <h6>Служба технической поддержки</h6>
+                    <p style="margin: 0;">Если у вас возникли вопросы, свяжитесь с нами по электронной почте:</p>
+                    <p style="margin: 0;"><a href="mailto:studcontrolapp@yandex.ru">studcontrolapp@yandex.ru</a></p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col text-center">
+                    <a href="https://vk.com/uszakow_w" target="_blank">Автор проекта</a>
+                    <span class="separator">|</span>
+                    <a href="{{ url_for('privacy_policy') }}">Политика конфиденциальности</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

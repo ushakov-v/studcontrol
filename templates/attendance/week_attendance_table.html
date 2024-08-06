@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Общая таблица посещаемости</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container-custom,
+            .form-group-column-center {
+                max-width: 100%;
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .title-center {
+                font-size: 28px;
+                text-align: center;
+            }
+
+            .table-container-week {
+                overflow-x: scroll;
+                width: 100%;
+            }
+
+            th.wide-column {
+                min-width: 150px;
+            }
+
+            .toggle-switch {
+                flex-direction: row;
+            }
+
+            .toggle-option {
+                margin-bottom: 10px;
+                width: 100%;
+                text-align: center;
+            }
+
+            .toggle-option.active {
+                background-color: #007bff;
+                color: #fff;
+            }
+
+            .fixed-button {
+                position: static;
+                width: 196px;
+                display: inline-block;
+                text-align: right;
+                margin-top: 20px;
+                margin-left: auto;
+                margin-right: 4%;
+            }
+        }
+        .tooltip-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #6c757d;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+            line-height: 20px;
+            cursor: pointer;
+            margin-left: 5px;
+            position: relative;
+        }
+
+        .tooltip-icon:hover .tooltip-text {
+            display: block;
+        }
+
+        .tooltip-text {
+            display: none;
+            width: 200px;
+            background-color: #6c757d;
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%; /* Позиционирование сверху */
+            left: 50%;
+            margin-left: -100px;
+        }
+
+        .tooltip-text::after {
+            content: "";
+            position: absolute;
+            top: 100%; /* Снизу элемента tooltip */
+            left: 50%;
+            margin-left: -5px;
+            border-width: 5px;
+            border-style: solid;
+            border-color: #6c757d transparent transparent transparent;
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container-custom mt-5">
+        <h1 class="title-center">Общая таблица посещаемости</h1>
+        <form action="" method="get">
+            <input type="hidden" name="user_id" value="{{ user_id }}">
+            <div class="form-group-column-center">
+                <label for="semester">Выберите семестр:</label>
+                <select id="semester" name="semester" class="form-control" onchange="this.form.submit()">
+                    {% for i in range(1, total_semesters + 1) %}
+                    <option value="{{ i }}" {% if i == selected_semester %}selected{% endif %}>Семестр {{ i }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+
+        <div class="d-flex justify-content-center my-3">
+            <div class="toggle-switch d-flex">
+                <div id="absences-toggle" class="toggle-option active mr-2">Пропущенные занятия</div>
+                <div id="hours-toggle" class="toggle-option">Пропущенные часы</div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end my-3">
+            <span class="tooltip-icon mt-2 mr-2">?
+                    <span class="tooltip-text">
+                        Экспортировать можно только таблицу с пропущенными часами
+                    </span>
+                </span>
+            <a href="{{ url_for('export_attendance_excel', semester=selected_semester, user_id=user_id) }}" class="btn btn-primary">Экспорт в Excel</a>
+        </div>
+
+        <!-- Контейнер для таблиц с прокруткой -->
+        <div class="table-container-week">
+            <!-- Таблица по пропущенным занятиям -->
+            {% if attendance_data %}
+            <table id="absences-table" class="table table-bordered">
+                <thead>
+                <tr>
+                    <th rowspan="2" class="wide-column fixed-column vertical-align-center"><div>ФИО студента</div></th>
+                    {% for week_offset in range(num_weeks) %}
+                    <th class="column-center" colspan="2">Неделя {{ week_offset + 1 }}</th>
+                    {% endfor %}
+                    <th class="column-center" colspan="2">Всего</th>
+                </tr>
+                <tr>
+                    {% for week_offset in range(num_weeks) %}
+                    <th class="rotate small-font"><div>Кол-во<br>пропущенных<br>занятий</div></th>
+                    <th class="rotate small-font"><div>По неув.<br>причине</div></th>
+                    {% endfor %}
+                    <th class="rotate small-font"><div>Кол-во<br>пропущенных<br>занятий</div></th>
+                    <th class="rotate small-font"><div>По неув.<br>причине</div></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for student, weeks in attendance_data.items() %}
+                <tr class="{% if student.expelled %}expelled{% endif %}">
+                    <td class="wide-column fixed-column">{{ student.name }}</td>
+                    {% set total_absences_sum = 0 %}
+                    {% set total_unexcused_absences_sum = 0 %}
+                    {% for week_offset in range(num_weeks) %}
+                    {% set week = week_offset + 1 %}
+                    <td class="wide-column-center" style="vertical-align: middle;">
+                        {% if weeks[week].total_absences == 'ДО' %}
+                        ДО
+                        {% else %}
+                        {{ weeks[week].total_absences }}
+                        {% set total_absences_sum = total_absences_sum + weeks[week].total_absences %}
+                        {% endif %}
+                    </td>
+                    <td class="wide-column-center" style="vertical-align: middle;">
+                        {% if weeks[week].unexcused_absences == 'ДО' %}
+                        ДО
+                        {% else %}
+                        {{ weeks[week].unexcused_absences }}
+                        {% set total_unexcused_absences_sum = total_unexcused_absences_sum + weeks[week].unexcused_absences %}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td class="wide-column-center" style="vertical-align: middle;">
+                        {{ total_absences_sum }}
+                    </td>
+                    <td class="wide-column-center" style="vertical-align: middle;">
+                        {{ total_unexcused_absences_sum }}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Таблица по пропущенным часам -->
+            <table id="hours-table" class="table table-bordered hidden">
+                <thead>
+                <tr>
+                    <th rowspan="2" class="wide-column fixed-column vertical-align-center"><div>ФИО студента</div></th>
+                    {% for week_offset in range(num_weeks) %}
+                    <th class="column-center" colspan="2">Неделя {{ week_offset + 1 }}</th>
+                    {% endfor %}
+                    <th class="column-center" colspan="2">Всего</th>
+                </tr>
+                <tr>
+                    {% for week_offset in range(num_weeks) %}
+                    <th class="rotate small-font"><div>Кол-во<br>пропущенных<br>часов</div></th>
+                    <th class="rotate small-font"><div>По неув.<br>причине</div></th>
+                    {% endfor %}
+                    <th class="rotate small-font"><div>Кол-во<br>пропущенных<br>часов</div></th>
+                    <th class="rotate small-font"><div>По неув.<br>причине</div></th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for student, weeks in attendance_data.items() %}
+                <tr class="{% if student.expelled %}expelled{% endif %}">
+                    <td class="wide-column fixed-column">{{ student.name }}</td>
+                    {% set total_hours_sum = 0 %}
+                    {% set total_unexcused_hours_sum = 0 %}
+                    {% for week_offset in range(num_weeks) %}
+                    {% set week = week_offset + 1 %}
+                    <td class="wide-column-center" style="vertical-align: middle;">
+                        {% if weeks[week].total_absences == 'ДО' %}
+                        ДО
+                        {% else %}
+                        {{ weeks[week].total_absences * 2 }}
+                        {% set total_hours_sum = total_hours_sum + weeks[week].total_absences * 2 %}
+                        {% endif %}
+                    </td>
+                    <td class="wide-column-center" style="vertical-align: middle;">
+                        {% if weeks[week].unexcused_absences == 'ДО' %}
+                        ДО
+                        {% else %}
+                        {{ weeks[week].unexcused_absences * 2 }}
+                        {% set total_unexcused_hours_sum = total_unexcused_hours_sum + weeks[week].unexcused_absences * 2 %}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    <td class="wide-column-center" style="vertical-align: middle;">
+                        {{ total_hours_sum }}
+                    </td>
+                    <td class="wide-column-center" style="vertical-align: middle;">
+                        {{ total_unexcused_hours_sum }}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-info full-width-table" role="alert">
+                Посещаемость не найдена для выбранного семестра.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
+    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору группы</a>
+    {% endif %}
+</div>
+{% include 'footer.html' %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Переключатель
+        document.getElementById('absences-toggle').addEventListener('click', function() {
+            switchTables('absences-table', 'hours-table', this, document.getElementById('hours-toggle'));
+        });
+        document.getElementById('hours-toggle').addEventListener('click', function() {
+            switchTables('hours-table', 'absences-table', this, document.getElementById('absences-toggle'));
+        });
+
+        function switchTables(showTableId, hideTableId, activeToggle, inactiveToggle) {
+            document.getElementById(showTableId).classList.remove('hidden');
+            document.getElementById(hideTableId).classList.add('hidden');
+            activeToggle.classList.add('active');
+            inactiveToggle.classList.remove('active');
+        }
+    });
+</script>
+</body>
+</html>

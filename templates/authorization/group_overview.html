@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Обзор группы</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title-center {
+                font-size: 28px;
+            }
+
+            .card-deck {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .card {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            .btn-container {
+                justify-content: center;
+                padding: 10px 0;
+            }
+
+            .back-button-container {
+                justify-content: center;
+            }
+        }
+        .card-deck .card {
+            min-width: 250px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .card-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding-bottom: 0;
+        }
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            padding: 15px 0;
+        }
+        .card-deck-center {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        .card-deck-center .card {
+            min-width: 250px;
+            margin-bottom: 20px;
+        }
+        .back-button-container {
+            display: flex;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <h1 class="title-center mb-5">Обзор группы {{ group_name }}</h1>
+        <div class="card-deck">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Список группы</h5>
+                </div>
+                <div class="btn-container">
+                    <a href="{{ url_for('student_list', user_id=user.id) }}" class="btn btn-primary">Перейти</a>
+                </div>
+            </div>
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Список предметов</h5>
+                </div>
+                <div class="btn-container">
+                    <a href="{{ url_for('subject_list', user_id=user.id) }}" class="btn btn-primary">Перейти</a>
+                </div>
+            </div>
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Общая таблица посещаемости группы</h5>
+                </div>
+                <div class="btn-container">
+                    <a href="{{ url_for('week_attendance_table', user_id=user.id) }}" class="btn btn-primary">Перейти</a>
+                </div>
+            </div>
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Таблица посещаемости группы по дням</h5>
+                </div>
+                <div class="btn-container">
+                    <a href="{{ url_for('subject_week_attendance', user_id=user.id) }}" class="btn btn-primary">Перейти</a>
+                </div>
+            </div>
+        </div>
+        {% if current_user.role == 'admin' %}
+        <div class="card-deck-center">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h5 class="card-title">Добавить посещаемость</h5>
+                </div>
+                <div class="btn-container">
+                    <a href="{{ url_for('attendance', user_id=user.id) }}" class="btn btn-primary">Перейти</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="back-button-container mt-5">
+            <a href="{{ url_for('user_list') }}" class="btn btn-secondary">Назад к списку пользователей</a>
+        </div>
+    </div>
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

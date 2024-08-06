@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление запросами</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title-center {
+                font-size: 28px;
+                text-align: center;
+            }
+
+            .table-responsive {
+                border: 0;
+            }
+
+            .table thead {
+                display: none;
+            }
+
+            .table tr {
+                display: block;
+                margin-bottom: 15px;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .table td {
+                display: block;
+                text-align: right;
+                font-size: 14px;
+                border-bottom: 0;
+                position: relative;
+                padding-left: 50%;
+            }
+
+            .table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+            }
+
+            .table td[data-label="Действия"]::before {
+                content: none;
+            }
+
+            .btn {
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            .alert {
+                text-align: center;
+            }
+
+            .table {
+                border: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <h1 class="title-center">Управление запросами</h1>
+        {% with messages = get_flashed_messages(with_categories=True) %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category }}" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+        {% if requests %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Студент</th>
+                    <th>Группа</th>
+                    <th>Дата запроса</th>
+                    <th>Действия</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for request in requests %}
+                <tr>
+                    <td data-label="Студент">{{ request.student_user.full_name }}</td>
+                    <td data-label="Группа">{{ request.student_user.group }}</td>
+                    <td data-label="Дата запроса">{{ request.local_timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+                    <td data-label="Действия">
+                        {% if request.institute %}
+                        <!-- Если это запрос на смену института -->
+                        <form method="POST" action="{{ url_for('approve_request', request_id=request.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-success btn-sm">Одобрить</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('reject_request', request_id=request.id) }}" style="display:inline;">
+                            <button type="submit" class="btn btn-danger btn-sm">Отклонить</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+            Нет новых запросов.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

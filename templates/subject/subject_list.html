@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Список предметов</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <script>
+        function updateSubjects() {
+            const semester = document.getElementById('semester').value;
+            const userId = '{{ user_id }}';
+            window.location.href = `?semester=${semester}&user_id=${userId}`;
+        }
+
+        function confirmDeletion(event) {
+            if (!confirm('Вы уверены, что хотите удалить этот предмет?')) {
+                event.preventDefault();
+            }
+        }
+    </script>
+    <style>
+        @media (max-width: 768px) {
+            .container-custom-subjects {
+                max-width: 100%;
+                padding: 15px;
+            }
+
+            .form-group-column-center {
+                width: 100%;
+            }
+
+            .table {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+            }
+
+            th, td {
+                white-space: nowrap;
+            }
+
+            .title-center {
+                font-size: 28px;
+            }
+
+            .table .btn {
+                margin-right: 5px;
+            }
+
+            .fixed-button {
+                position: static;
+                width: 196px;
+                display: inline-block;
+                text-align: right;
+                margin-top: 20px;
+                margin-left: auto;
+                margin-right: 4%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container-custom-subjects mt-5">
+        <h1 class="title-center">Список предметов</h1>
+        <div class="form-group-column-center">
+            <label for="semester">Выберите семестр</label>
+            <select id="semester" name="semester" class="form-control" onchange="updateSubjects()">
+                {% for semester in semesters %}
+                <option value="{{ semester }}" {% if semester == selected_semester %}selected{% endif %}>Семестр {{ semester }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if current_user.id == user_id or current_user.role == 'admin' %}
+        <a href="{{ url_for('add_subject', semester=selected_semester, user_id=user_id) }}" class="btn btn-success mb-3 mt-5">Добавить новый предмет</a>
+        {% else %}
+        <div class="btn btn-success mb-3 invisible">Добавить новый предмет</div>
+        {% endif %}
+        {% if subjects %}
+        <table class="table">
+            <thead>
+            <tr>
+                <th style="width: 46px;">№</th>
+                <th style="width: 400px;">Название предмета</th>
+                <th style="width: 150px;">Аббревиатура</th>
+                <th style="width: 100px;">Семестр</th>
+                <th style="width: 200px;">Форма контроля</th>
+                <th style="width: 200px;">Количество часов</th>
+                <th style="width: 370px;">Действия</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for subject in subjects %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ subject.name }}</td>
+                <td>{{ subject.abbreviated_name }}</td>
+                <td>{{ subject.semester }}</td>
+                <td>
+                    {% if subject.control == 'credit' %}
+                    Зачёт
+                    {% elif subject.control == 'exam' %}
+                    Экзамен
+                    {% elif subject.control == 'differentiated_credit' %}
+                    Дифференцированный зачёт
+                    {% elif subject.control == 'coursework' %}
+                    Курсовая работа (проект)
+                    {% elif subject.control == 'diploma' %}
+                    Защита ВКР
+                    {% else %}
+                    Неизвестная форма контроля
+                    {% endif %}
+                </td>
+                <td>{{ subject.hours }}</td>
+                <td class="action-buttons">
+                    <a href="{{ url_for('view_subject_attendance', subject_id=subject.id, user_id=user_id) }}" class="btn btn-primary mb-2">Подробнее</a>
+                    {% if current_user.id == user_id or current_user.role == 'admin' %}
+                    <a href="{{ url_for('edit_subject', subject_id=subject.id, user_id=user_id) }}" class="btn btn-info mb-2">Редактировать</a>
+                    <a href="{{ url_for('delete_subject', subject_id=subject.id, semester=selected_semester, user_id=user_id) }}" class="btn btn-danger mb-2" onclick="confirmDeletion(event)">Удалить</a>
+                    {% else %}
+                    <div class="empty"></div>
+                    <div class="empty"></div>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-info full-width-subject" role="alert">
+            В списке пока нет предметов.
+        </div>
+        {% endif %}
+    </div>
+    {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
+    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору группы</a>
+    {% endif %}
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

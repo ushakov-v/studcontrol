@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактирование информации о студенте</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title-center {
+                font-size: 28px;
+            }
+
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            .form-group input[type="radio"] {
+                width: auto;
+            }
+
+            .form-group .radio-label {
+                display: inline-block;
+                margin-right: 10px;
+                font-size: 14px;
+            }
+
+            .d-flex {
+                flex-direction: row;
+                align-items: stretch;
+            }
+
+            .d-flex.float-right.mt-4 .btn {
+                margin-bottom: 10px;
+            }
+
+            .fixed-button {
+                position: revert;
+                width: 196px;
+                display: inline-block;
+                text-align: right;
+                margin-top: 20px;
+                margin-left: auto;
+                margin-right: 4%;
+            }
+        }
+    </style>
+    <script>
+        // Функция для форматирования ФИО
+        function capitalizeName() {
+            const nameField = document.getElementById('name');
+            let nameValue = nameField.value.trim();
+
+            // Разделяем на части по пробелам и дефисам, включая разделители в результат
+            let parts = nameValue.split(/([-\s])/);
+
+            // Применяем капитилизацию к каждой части, которая не является разделителем
+            for (let i = 0; i < parts.length; i++) {
+                if (parts[i] !== '-' && parts[i] !== ' ') {
+                    parts[i] = parts[i].charAt(0).toUpperCase() + parts[i].slice(1).toLowerCase();
+                }
+            }
+
+            // Объединяем части обратно
+            nameField.value = parts.join('');
+        }
+    </script>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <h1 class="title-center">Редактирование информации о студенте</h1>
+        {% if message %}
+        <div class="alert alert-{{ message_type }} mt-3">
+            {{ message }}
+        </div>
+        {% endif %}
+        <form method="POST" action="{{ url_for('edit_student', student_id=student.id, semester=selected_semester, user_id=user_id) }}">
+            <div class="form-group">
+                <label for="name">ФИО студента <span style="color: #6c757d;">(Пример: Иванов Иван Иванович)</span></label>
+                <input type="text" class="form-control" id="name" name="name" value="{{ form_data['name'] if form_data else student.name }}" required onblur="capitalizeName()">
+            </div>
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ form_data['email'] if form_data else student.email }}">
+            </div>
+            <div class="form-group">
+                <label for="phone">Телефон</label>
+                <input type="tel" class="form-control" id="phone" name="phone" value="{{ form_data['phone'] if form_data else student.phone }}">
+            </div>
+            <div class="form-group">
+                <label for="subgroup">Подгруппа</label><br>
+                <input type="radio" id="whole_group" name="subgroup" value="whole_group" checked>
+                <label for="whole_group">Вся группа</label><br>
+                <input type="radio" id="subgroup1" name="subgroup" value="subgroup1" {% if form_data and form_data['subgroup'] == 'subgroup1' %}checked{% elif student.subgroup == 'subgroup1' %}checked{% endif %}>
+                <label for="subgroup1">Подгруппа 1</label><br>
+                <input type="radio" id="subgroup2" name="subgroup" value="subgroup2" {% if form_data and form_data['subgroup'] == 'subgroup2' %}checked{% elif student.subgroup == 'subgroup2' %}checked{% endif %}>
+                <label for="subgroup2">Подгруппа 2</label>
+            </div>
+            <div class="form-group hidden">
+                <label for="semester">Семестр</label>
+                <select id="semester" name="semester" class="form-control" readonly required>
+                    {% for i in range(1, total_semesters + 1) %}
+                    <option value="{{ i }}" {% if form_data and form_data['semester']|int == i %}selected{% elif i == selected_semester %}selected{% endif %}>Семестр {{ i }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="d-flex justify-content float-right mt-4">
+                <button type="submit" class="btn btn-primary mr-2">Сохранить</button>
+                <a href="{{ url_for('student_list', semester=selected_semester, user_id=user_id) }}" class="btn btn-secondary">Назад</a>
+            </div>
+        </form>
+    </div>
+    {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
+    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору групп</a>
+    {% endif %}
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Контроль посещаемости</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .jumbotron {
+                padding: 1rem;
+            }
+            .btn-group-horizontal {
+                flex-direction: row;
+                justify-content: space-between;
+                width: 100%;
+            }
+            .btn-group-horizontal .btn {
+                flex: 1;
+                margin: 0 5px;
+                width: 100%;
+            }
+        }
+        body, html {
+            height: 100%;
+        }
+        .container {
+            flex: 1 0 auto;
+            margin-top: 3rem; /* Увеличенное верхнее поле */
+        }
+        .jumbotron {
+            background-color: #f0f0f0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+        .btn-group-horizontal {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        .btn-group-horizontal .btn {
+            margin: 0 0.5rem;
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper">
+    {% include 'navbar.html' %}
+    <div class="container">
+        <div class="jumbotron mt-5">
+            <h1 class="display-4 mb-4">Добро пожаловать!</h1>
+            {% if current_user.is_authenticated %}
+            <p class="lead mb-4">Спасибо, что воспользовались нашим сервисом!</p>
+            {% if current_user.role == 'captain' %}
+            <a href="{{ url_for('attendance') }}" class="btn btn-primary">Добавить посещаемость</a>
+            {% elif current_user.role == 'chief' %}
+            <a href="{{ url_for('user_list') }}" class="btn btn-primary">Список пользователей</a>
+            {% endif %}
+            {% else %}
+            <p class="lead">Для продолжения работы, пожалуйста, зарегистрируйтесь на нашем сервисе.</p>
+            <div class="btn-group-horizontal">
+                <a href="{{ url_for('register_captain') }}" class="btn btn-primary" style="width: 200px;">Я - староста</a>
+                <a href="{{ url_for('register_student') }}" class="btn btn-primary" style="width: 200px;">Я - студент</a>
+            </div>
+            <div class="btn-group-horizontal">
+                <a href="{{ url_for('register_chief') }}" class="btn btn-primary" style="width: 420px;">Я - администрация университета</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% include 'footer.html' %}
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

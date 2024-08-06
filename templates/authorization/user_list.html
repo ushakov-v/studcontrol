@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Список пользователей</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container-custom-subjects {
+                max-width: 100%;
+                padding: 15px;
+            }
+
+            .form-row {
+                flex-direction: column;
+            }
+
+            .form-group {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+
+            .table {
+                display: block;
+                width: 100%;
+                overflow-x: auto;
+            }
+
+            th, td {
+                white-space: nowrap;
+            }
+
+            .title-center {
+                font-size: 28px;
+            }
+
+            .table .btn {
+                margin-right: 5px;
+                margin-bottom: 5px;
+            }
+        }
+        .table th, .table td {
+            vertical-align: middle; /* Выравнивание содержимого ячеек по центру по вертикали */
+        }
+        .table a {
+            padding: 0 !important;
+        }
+        form {
+            margin-bottom: 0 !important;
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container-custom-subjects mt-5 mb-5">
+        <h1 class="title-center">Список зарегистрированных пользователей</h1>
+
+        <!-- Форма для фильтрации по институтам, ролям и поиска по ФИО -->
+        <form id="filterForm" method="GET" action="{{ url_for('user_list') }}">
+            <div class="form-row">
+                <div class="form-group col-md-4 mb-4">
+                    <label for="instituteFilter">Институт:</label>
+                    <select class="form-control" id="instituteFilter" name="institute" onchange="submitForm()">
+                        <option value="">Все институты</option>
+                        <option value="institute_1">Институт информационных технологий</option>
+                        <option value="institute_2">Институт ядерной энергии и промышленности</option>
+                        <option value="institute_3">Юридический институт</option>
+                        <option value="institute_4">Морской институт</option>
+                        <option value="institute_5">Институт радиоэлектроники и интеллектуальных технических систем</option>
+                        <option value="institute_6">Институт финансов, экономики и управления</option>
+                        <option value="institute_7">Политехнический институт</option>
+                        <option value="institute_8">Институт общественных наук и международных отношений</option>
+                        <option value="institute_9">Гуманитарно-педагогический институт</option>
+                        <option value="institute_10">Институт фундаментальной медицины и здоровьесбережения</option>
+                        <option value="institute_11">Институт развития города</option>
+                        <option value="institute_12">Институт перспективных исследований</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4 mb-4">
+                    <label for="roleFilter">Роль:</label>
+                    <select class="form-control" id="roleFilter" name="role" onchange="submitForm()">
+                        <option value="">Все роли</option>
+                        <option value="admin">Администратор</option>
+                        <option value="chief">Заведующий</option>
+                        <option value="captain">Староста</option>
+                        <option value="student">Студент</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4 mb-4">
+                    <label for="nameFilter">ФИО:</label>
+                    <input type="text" class="form-control" id="nameFilter" name="name" placeholder="Введите ФИО" onkeypress="checkEnter(event)">
+                </div>
+            </div>
+        </form>
+
+        <!-- Таблица со списком пользователей -->
+        {% if users %}
+        <table class="table">
+            <thead>
+            <tr>
+                <th style="width: 46px;">№</th>
+                <th style="width: 220px;"><a href="#" onclick="sortTable('full_name')">ФИО</a></th>
+                <th style="width: 200px;">E-mail</th>
+                <th style="width: 150px;">Роль</th>
+                <th style="width: 230px;">Институт</th>
+                <th style="width: 200px;"><a href="#" onclick="sortTable('group')">Группа</a></th>
+                {% if current_user.is_authenticated and (current_user.role == 'admin' or current_user.role == 'chief') %}
+                <th style="width: 200px;">Действия</th>
+                {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ user.full_name }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                    {% if user.role == "admin" %}
+                    Администратор
+                    {% elif user.role == "captain" %}
+                    Староста
+                    {% elif user.role == "chief" %}
+                    Заведующий
+                    {% elif user.role == "student" %}
+                    Студент
+                    {% else %}
+                    Неизвестная роль
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.institute == "institute_1" %}
+                    Институт информационных технологий
+                    {% elif user.institute == "institute_2" %}
+                    Институт ядерной энергии и промышленности
+                    {% elif user.institute == "institute_3" %}
+                    Юридический институт
+                    {% elif user.institute == "institute_4" %}
+                    Морской институт
+                    {% elif user.institute == "institute_5" %}
+                    Институт радиоэлектроники и интеллектуальных технических систем
+                    {% elif user.institute == "institute_6" %}
+                    Институт финансов, экономики и управления
+                    {% elif user.institute == "institute_7" %}
+                    Политехнический институт
+                    {% elif user.institute == "institute_8" %}
+                    Институт общественных наук и международных отношений
+                    {% elif user.institute == "institute_9" %}
+                    Гуманитарно-педагогический институт
+                    {% elif user.institute == "institute_10" %}
+                    Институт фундаментальной медицины и здоровьесбережения
+                    {% elif user.institute == "institute_11" %}
+                    Институт развития города
+                    {% elif user.institute == "institute_12" %}
+                    Институт перспективных исследований
+                    {% else %}
+                    Неизвестный институт
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.role == 'student' and user.id in student_captains %}
+                    <a href="{{ url_for('group_overview', user_id=student_captains[user.id]) }}">{{ user.group }}</a>
+                    {% else %}
+                    <a href="{{ url_for('group_overview', user_id=user.id) }}">{{ user.group }}</a>
+                    {% endif %}
+                </td>
+                {% if current_user.is_authenticated and (current_user.role == 'admin' or current_user.role == 'chief') %}
+                <td>
+                    <div class="action-buttons">
+                        {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                        <form method="GET" action="{{ url_for('edit_user', user_id=user.id) }}" style="display: inline;">
+                            <button type="submit" class="btn btn-warning btn-sm mr-1 mb-2">Редактировать</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('delete_user', user_id=user.id) }}" style="display: inline;" onsubmit="return confirm('Вы уверены, что хотите удалить этого пользователя?');">
+                            <button type="submit" class="btn btn-danger btn-sm mb-2">Удалить</button>
+                        </form>
+                        {% endif %}
+                        {% if user.role == 'student' %}
+                        <form method="POST" action="{{ url_for('transfer_captain_rights', student_id=user.id) }}">
+                            <button type="submit" class="btn btn-primary btn-sm transfer-button" style="width: 190px;">Передать права старосты</button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+            Нет данных для выбранного института или роли.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% include 'footer.html' %}
+<script>
+    // Функция для применения фильтрации по институтам и ролям
+    function submitForm() {
+        document.getElementById('filterForm').submit();
+    }
+
+    // Функция для проверки нажатия клавиши Enter в поле поиска
+    function checkEnter(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            submitForm();
+        }
+    }
+
+    // Функция для установки выбранного значения фильтра при загрузке страницы
+    function setFilterValue() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const instituteFilter = urlParams.get('institute');
+        const roleFilter = urlParams.get('role');
+        const nameFilter = urlParams.get('name');
+
+        if (instituteFilter) {
+            document.getElementById('instituteFilter').value = instituteFilter;
+        }
+
+        if (roleFilter) {
+            document.getElementById('roleFilter').value = roleFilter;
+        }
+
+        if (nameFilter) {
+            document.getElementById('nameFilter').value = nameFilter;
+        }
+    }
+
+    // Функция для сортировки таблицы
+    function sortTable(sortBy) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('sort_by', sortBy);
+        window.location.href = url.toString();
+    }
+
+    // Устанавливаем значение фильтра при загрузке страницы
+    document.addEventListener('DOMContentLoaded', setFilterValue);
+</script>
+
+</body>
+</html>

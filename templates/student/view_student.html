@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Информация о студенте</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .title-center {
+                font-size: 28px;
+            }
+
+            .card-body {
+                padding: 15px;
+            }
+
+            .card-title {
+                font-size: 20px;
+            }
+
+            .card-text {
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+
+            .card-text-custom {
+                font-size: 14px;
+                margin-bottom: 10px;
+            }
+
+            .card-text ul {
+                padding-left: 20px;
+            }
+
+            .card-text ul li {
+                margin-bottom: 5px;
+            }
+
+            .btn {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+
+            .btn-secondary.float-right {
+                margin-top: 10px;
+                float: none;
+                width: 100%;
+            }
+
+            .fixed-button {
+                position: static;
+                width: 196px;
+                display: inline-block;
+                text-align: right;
+                margin-top: 20px;
+                margin-left: auto;
+                margin-right: 4%;
+            }
+        }
+    </style>
+    <script>
+        function confirmDeletion(event) {
+            if (!confirm('Вы уверены, что хотите удалить этого студента из базы данных?')) {
+                event.preventDefault();
+            }
+        }
+    </script>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <h1 class="title-center">Подробнее о студенте</h1>
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <h4 class="card-title">Информация о студенте: {{ student.name }}</h4>
+                <p class="card-text"><strong>Email:</strong> {{ student.email }}</p>
+                <p class="card-text"><strong>Телефон:</strong> {{ student.phone }}</p>
+                <p class="card-text"><strong>Подгруппа:</strong>
+                    {% if student.subgroup == 'whole_group' %}
+                    Вся группа
+                    {% elif student.subgroup == 'subgroup1' %}
+                    Подгруппа 1
+                    {% elif student.subgroup == 'subgroup2' %}
+                    Подгруппа 2
+                    {% else %}
+                    Неизвестная подгруппа
+                    {% endif %}
+                </p>
+                <p class="card-text"><strong>На дистанционном обучении:</strong> {{ 'Да' if remote_learning_dates else 'Нет' }}
+                    {% if remote_learning_dates %}
+                    ({{ remote_learning_dates | join(', ') }})
+                    {% endif %}
+                </p>
+                <p class="card-text"><strong>Отчислен:</strong> {{ 'Да' if student.expelled else 'Нет' }}
+                    {% if student.expelled %}
+                    (с {{ student.expel_date.strftime('%d.%m.%Y') }})
+                    {% endif %}
+                </p>
+                <p class="card-text-custom"><strong>Количество пропущенных занятий:</strong>
+                <ul>
+                    <li>Всего: {{ total_absences }}</li>
+                    <li>По неуважительной причине: {{ unexcused_absences }}</li>
+                </ul>
+                </p>
+                <p class="card-text-custom"><strong>Количество пропущенных часов:</strong>
+                <ul>
+                    <li>Всего: {{ total_absences * 2 }}</li>
+                    <li>По неуважительной причине: {{ unexcused_absences * 2 }}</li>
+                </ul>
+                </p>
+                <a href="{{ url_for('student_week_attendance', student_id=student.id, user_id=user_id) }}" class="btn btn-primary mr-2">Посещаемость по неделям</a>
+                {% if current_user.id == student.user_id or current_user.role == 'admin' %}
+                <a href="{{ url_for('edit_student', student_id=student.id, user_id=user_id) }}" class="btn btn-info mr-2">Редактировать</a>
+                <a href="{{ url_for('delete_student', student_id=student.id, user_id=user_id) }}" class="btn btn-danger" onclick="confirmDeletion(event)">Удалить</a>
+
+                <div class="mt-3">
+                    <a href="{{ url_for('toggle_remote_learning', student_id=student.id, user_id=user_id) }}" class="btn btn-warning mr-2">
+                        {% if remote_learning_dates %}
+                        Изменить сроки дистанционного обучения
+                        {% else %}
+                        Перевести на дистанционное обучение
+                        {% endif %}
+                    </a>
+                    <a href="{{ url_for('toggle_expel_student', student_id=student.id, user_id=user_id) }}" class="btn btn-danger mr-2">
+                        {% if student.expelled %}
+                        Зачислить
+                        {% else %}
+                        Отчислить
+                        {% endif %}
+                    </a>
+                </div>
+                {% endif %}
+                <a href="{{ url_for('student_list', user_id=user_id, semester=selected_semester) }}" class="btn btn-secondary float-right">Назад к списку студентов</a>
+            </div>
+        </div>
+    </div>
+    {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
+    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору группы</a>
+    {% endif %}
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

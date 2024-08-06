@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Редактирование предмета</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title-center {
+                font-size: 28px;
+            }
+
+
+
+            .teacher-field {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .field-teacher, .form-group.col-md-2, .form-group.col-md-3, .button-add-and-remove-teacher {
+                flex: 1 1 100%;
+                margin-bottom: 10px;
+            }
+
+            .button-add-and-remove-teacher {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .button-add-and-remove-teacher button {
+                width: 100%;
+            }
+
+            .d-flex.float-right.mt-4 {
+                flex-direction: row;
+                align-items: stretch;
+            }
+
+            .d-flex.float-right.mt-4 .btn {
+                margin-bottom: 10px;
+                width: 100%;
+            }
+
+            .fixed-button {
+                position: static;
+                width: 196px;
+                display: inline-block;
+                text-align: right;
+                margin-top: 20px;
+                margin-left: auto;
+                margin-right: 4%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <h1 class="title-center">Редактирование предмета</h1>
+        {% if error_message %}
+        <div class="alert alert-danger mt-3">
+            {{ error_message }}
+        </div>
+        {% endif %}
+        <form method="POST" onsubmit="return validateTeachers()">
+            <div class="form-group">
+                <label for="name">Название предмета</label>
+                <input type="text" id="name" name="name" class="form-control" value="{{ form_data['name'] if form_data else subject.name }}" onblur="capitalizeNames()" required>
+            </div>
+            <div class="form-group">
+                <label for="abbreviated_name">Сокращённое название предмета</label>
+                <input type="text" id="abbreviated_name" name="abbreviated_name" class="form-control" value="{{ form_data['abbreviated_name'] if form_data else subject.abbreviated_name }}" onblur="capitalizeNames()">
+            </div>
+            <div class="form-group">
+                <label for="semester">Учебный семестр</label>
+                <select id="semester" name="semester" class="form-control" required>
+                    {% for i in range(1, total_semesters + 1) %}
+                    <option value="{{ i }}" {% if (form_data and form_data['semester']|int == i) or (not form_data and i == subject.semester) %}selected{% endif %}>Семестр {{ i }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="control">Вид контроля</label>
+                <select id="control" name="control" class="form-control" required>
+                    <option value="credit" {% if (form_data and form_data['control'] == 'credit') or (not form_data and subject.control == 'credit') %}selected{% endif %}>Зачёт</option>
+                    <option value="exam" {% if (form_data and form_data['control'] == 'exam') or (not form_data and subject.control == 'exam') %}selected{% endif %}>Экзамен</option>
+                    <option value="differentiated_credit" {% if (form_data and form_data['control'] == 'differentiated_credit') or (not form_data and subject.control == 'differentiated_credit') %}selected{% endif %}>Дифференцированный зачёт</option>
+                    <option value="coursework" {% if (form_data and form_data['control'] == 'coursework') or (not form_data and subject.control == 'coursework') %}selected{% endif %}>Курсовая работа (проект)</option>
+                    <option value="diploma" {% if (form_data and form_data['control'] == 'diploma') or (not form_data and subject.control == 'diploma') %}selected{% endif %}>Защита ВКР</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="hours">Количество часов</label>
+                <input type="text" id="hours" name="hours" class="form-control" value="{{ form_data['hours'] if form_data else subject.hours }}" required>
+            </div>
+
+            <!-- Контейнер для полей преподавателей -->
+            <div id="teachers-container">
+                {% for teacher in teachers_data %}
+                <div class="form-row teacher-field d-flex align-items-end">
+                    <input type="hidden" name="teacher_id_{{ teacher.index }}" value="{{ teacher.id }}">
+                    <div class="field-teacher" style="width: 53.49%;">
+                        <label for="teacher_name_{{ teacher.index }}">Имя преподавателя</label>
+                        <input type="text" id="teacher_name_{{ teacher.index }}" name="teacher_name_{{ teacher.index }}" class="form-control" value="{{ teacher.name }}" pattern="^[А-Яа-яЁё\s]+$" title="Имя преподавателя должно содержать только буквы русского алфавита" onblur="capitalizeTeacherName(this)">
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label for="academic_degree_{{ teacher.index }}">Учёная степень</label>
+                        <select id="academic_degree_{{ teacher.index }}" name="academic_degree_{{ teacher.index }}" class="form-control">
+                            <option value="none" {% if teacher.academic_degree == 'none' %}selected{% endif %}>Без степени</option>
+                            <option value="doctor" {% if teacher.academic_degree == 'doctor' %}selected{% endif %}>Доктор наук</option>
+                            <option value="candidate" {% if teacher.academic_degree == 'candidate' %}selected{% endif %}>Кандидат наук</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="academic_title_{{ teacher.index }}">Учёное звание</label>
+                        <select id="academic_title_{{ teacher.index }}" name="academic_title_{{ teacher.index }}" class="form-control">
+                            <option value="none" {% if teacher.academic_title == 'none' %}selected{% endif %}>Без звания</option>
+                            <option value="assistant" {% if teacher.academic_title == 'assistant' %}selected{% endif %}>Ассистент</option>
+                            <option value="associate" {% if teacher.academic_title == 'associate' %}selected{% endif %}>Доцент</option>
+                            <option value="teacher" {% if teacher.academic_title == 'teacher' %}selected{% endif %}>Преподаватель</option>
+                            <option value="professor" {% if teacher.academic_title == 'professor' %}selected{% endif %}>Профессор</option>
+                            <option value="senior_teacher" {% if teacher.academic_title == 'senior_teacher' %}selected{% endif %}>Старший преподаватель</option>
+                        </select>
+                    </div>
+                    <div class="button-add-and-remove-teacher">
+                        {% if loop.first %}
+                        <button type="button" id="add-teacher-button" class="btn btn-primary" onclick="addTeacherField()">
+                            <svg width="18px" height="18px" viewBox="0 2 22 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 12H18M12 6V18" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"
+                                      stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        {% else %}
+                        <button type="button" class="btn btn-danger remove-button" onclick="removeTeacherField(this, '{{ teacher.id }}')">
+                            <svg width="18px" height="18px" viewBox="0 2 22 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M4 6H20M16 6L15.7294 5.18807C15.4671 4.40125 15.3359 4.00784 15.0927 3.71698C14.8779 3.46013 14.6021 3.26132 14.2905 3.13878C13.9376 3 13.523 3 12.6936 3H11.3064C10.477 3 10.0624 3 9.70951 3.13878C9.39792 3.26132 9.12208 3.46013 8.90729 3.71698C8.66405 4.00784 8.53292 4.40125 8.27064 5.18807L8 6M18 6V16.2C18 17.8802 18 18.7202 17.673 19.362C17.3854 19.9265 16.9265 20.3854 16.362 20.673C15.7202 21 14.8802 21 13.2 21H10.8C9.11984 21 8.27976 21 7.63803 20.673C7.07354 20.3854 6.6146 19.9265 6.32698 19.362C6 18.7202 6 17.8802 6 16.2V6M14 10V17M10 10V17" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+                {% if not teachers_data %}
+                <div class="form-row teacher-field d-flex align-items-end">
+                    <input type="hidden" name="teacher_id_1" value="">
+                    <div class="field-teacher" style="width: 53.49%;">
+                        <label for="teacher_name_1">Имя преподавателя</label>
+                        <input type="text" id="teacher_name_1" name="teacher_name_1" class="form-control" pattern="^[А-Яа-яЁё\s]+$" title="Имя преподавателя должно содержать только буквы русского алфавита" onblur="capitalizeTeacherName(this)">
+                    </div>
+                    <div class="form-group col-md-2">
+                        <label for="academic_degree_1">Учёная степень</label>
+                        <select id="academic_degree_1" name="academic_degree_1" class="form-control">
+                            <option value="none">Без степени</option>
+                            <option value="doctor" {% if form_data and form_data['academic_degree_1'] == 'doctor' %}selected{% endif %}>Доктор наук</option>
+                            <option value="candidate" {% if form_data and form_data['academic_degree_1'] == 'candidate' %}selected{% endif %}>Кандидат наук</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label for="academic_title_1">Учёное звание</label>
+                        <select id="academic_title_1" name="academic_title_1" class="form-control">
+                            <option value="none">Без звания</option>
+                            <option value="assistant" {% if form_data and form_data['academic_title_1'] == 'assistant' %}selected{% endif %}>Ассистент</option>
+                            <option value="associate" {% if form_data and form_data['academic_title_1'] == 'associate' %}selected{% endif %}>Доцент</option>
+                            <option value="teacher" {% if form_data and form_data['academic_title_1'] == 'teacher' %}selected{% endif %}>Преподаватель</option>
+                            <option value="professor" {% if form_data and form_data['academic_title_1'] == 'professor' %}selected{% endif %}>Профессор</option>
+                            <option value="senior_teacher" {% if form_data and form_data['academic_title_1'] == 'senior_teacher' %}selected{% endif %}>Старший преподаватель</option>
+                        </select>
+                    </div>
+                    <div class="button-add-and-remove-teacher">
+                        <button type="button" id="add-teacher-button" class="btn btn-primary">
+                            <svg width="18px" height="18px" viewBox="0 2 22 24" fill="none"
+                                 xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6 12H18M12 6V18" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"
+                                      stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            <input type="hidden" name="delete_teacher" id="delete_teacher">
+            <div class="d-flex justify-content float-right mt-4">
+                <button type="submit" class="btn btn-primary mr-2">Сохранить</button>
+                <a href="{{ url_for('subject_list', semester=selected_semester, user_id=subject.user_id) }}" class="btn btn-secondary">Назад</a>
+            </div>
+        </form>
+    </div>
+
+    {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
+    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору группы</a>
+    {% endif %}
+</div>
+{% include 'footer.html' %}
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script>
+    function capitalizeNames() {
+        const fields = ['name', 'abbreviated_name'];
+
+        fields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                let fieldValue = field.value.trim();
+                if (fieldValue.length > 0) {
+                    field.value = fieldValue.charAt(0).toUpperCase() + fieldValue.slice(1);
+                }
+            }
+        });
+    }
+
+    function capitalizeTeacherName(input) {
+        let words = input.value.trim().split(/\s+/);
+        for (let i = 0; i < words.length; i++) {
+            if (words[i].includes('-')) {
+                let subWords = words[i].split('-');
+                for (let j = 0; j < subWords.length; j++) {
+                    subWords[j] = subWords[j].charAt(0).toUpperCase() + subWords[j].slice(1).toLowerCase();
+                }
+                words[i] = subWords.join('-');
+            } else {
+                words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1).toLowerCase();
+            }
+        }
+        input.value = words.join(' ');
+    }
+
+    let teacherCount = {{ teachers_data|length if teachers_data else 1 }};
+    if (teacherCount === 0) {
+        teacherCount = 1;
+    }
+
+    function removeTeacherField(button, teacherId) {
+        const field = button.closest('.teacher-field');
+        field.remove();
+
+        const deleteTeacherInput = document.getElementById('delete_teacher');
+        let idsToDelete = deleteTeacherInput.value.split(',').filter(Boolean);  // split and filter empty strings
+        idsToDelete.push(teacherId);  // add the new id
+        deleteTeacherInput.value = idsToDelete.join(',');  // join back to a comma-separated string
+    }
+
+    function addTeacherField() {
+        teacherCount++;
+
+        const container = document.getElementById('teachers-container');
+        const field = document.createElement('div');
+        field.className = 'form-row teacher-field d-flex align-items-end';
+        field.innerHTML = `
+        <input type="hidden" name="teacher_id_${teacherCount}" value="">
+        <div class="field-teacher" style="width: 53.49%;">
+            <label for="teacher_name_${teacherCount}">Имя преподавателя</label>
+            <input type="text" id="teacher_name_${teacherCount}" name="teacher_name_${teacherCount}" class="form-control" pattern="^[А-Яа-яЁё\s]+$" title="Имя преподавателя должно содержать только буквы русского алфавита" onblur="capitalizeTeacherName(this)" required>
+        </div>
+        <div class="form-group col-md-2">
+            <label for="academic_degree_${teacherCount}">Учёная степень</label>
+            <select id="academic_degree_${teacherCount}" name="academic_degree_${teacherCount}" class="form-control">
+                <option value="none">Без степени</option>
+                <option value="doctor">Доктор наук</option>
+                <option value="candidate">Кандидат наук</option>
+            </select>
+        </div>
+        <div class="form-group col-md-3">
+            <label for="academic_title_${teacherCount}">Учёное звание</label>
+            <select id="academic_title_${teacherCount}" name="academic_title_${teacherCount}" class="form-control">
+                <option value="none">Без звания</option>
+                <option value="assistant">Ассистент</option>
+                <option value="associate">Доцент</option>
+                <option value="teacher">Преподаватель</option>
+                <option value="professor">Профессор</option>
+                <option value="senior_teacher">Старший преподаватель</option>
+            </select>
+        </div>
+        <div class="button-add-and-remove-teacher">
+            <button type="button" class="btn btn-danger remove-button" onclick="removeTeacherField(this, '')">
+                <svg width="18px" height="18px" viewBox="0 2 22 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 6H20M16 6L15.7294 5.18807C15.4671 4.40125 15.3359 4.00784 15.0927 3.71698C14.8779 3.46013 14.6021 3.26132 14.2905 3.13878C13.9376 3 13.523 3 12.6936 3H11.3064C10.477 3 10.0624 3 9.70951 3.13878C9.39792 3.26132 9.12208 3.46013 8.90729 3.71698C8.66405 4.00784 8.53292 4.40125 8.27064 5.18807L8 6M18 6V16.2C18 17.8802 18 18.7202 17.673 19.362C17.3854 19.9265 16.9265 20.3854 16.362 20.673C15.7202 21 14.8802 21 13.2 21H10.8C9.11984 21 8.27976 21 7.63803 20.673C7.07354 20.3854 6.6146 19.9265 6.32698 19.362C6 18.7202 6 17.8802 6 16.2V6M14 10V17M10 10V17" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+        </div>
+    `;
+        container.appendChild(field);
+    }
+
+    function validateTeachers() {
+        let valid = true;
+        const teacherNames = document.querySelectorAll('[id^=teacher_name_]');
+        teacherNames.forEach((input) => {
+            if (!input.checkValidity()) {
+                alert(input.validationMessage);
+                valid = false;
+                return false;  // break the loop
+            }
+        });
+        return valid;
+    }
+</script>
+</body>
+</html>

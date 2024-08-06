@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Регистрация студента</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            max-width: 600px;
+        }
+
+        .card {
+            background-color: #ffffff;
+            border: none;
+            border-radius: 10px;
+        }
+
+        h1 {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 700;
+        }
+
+        .form-control {
+            border-radius: 5px;
+        }
+
+        .form-control::placeholder {
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        .btn-primary, .btn-secondary {
+            border-radius: 5px;
+            transition: background-color 0.3s, border-color 0.3s;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
+            border-color: #004085;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background-color: #5a6268;
+            border-color: #545b62;
+        }
+
+        .btn-block + .btn-block {
+            margin-top: 10px;
+        }
+
+        .d-none {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .form-group {
+                margin-bottom: 15px;
+            }
+
+            .btn-block {
+                width: 100%;
+            }
+
+            .title-center {
+                font-size: 28px;
+                text-align: center;
+            }
+        }
+    </style>
+    <script>
+        const institutesCaptains = {{ institutes_captains | tojson }};
+
+        // Функция для форматирования ФИО
+        function capitalizeName() {
+            const nameField = document.getElementById('full_name');
+            let nameValue = nameField.value.trim();
+
+            // Разделяем на части по пробелам и дефисам, включая разделители в результат
+            let parts = nameValue.split(/([-\s])/);
+
+            // Применяем капитилизацию к каждой части, которая не является разделителем
+            for (let i = 0; i < parts.length; i++) {
+                if (parts[i] !== '-' && parts[i] !== ' ') {
+                    parts[i] = parts[i].charAt(0).toUpperCase() + parts[i].slice(1).toLowerCase();
+                }
+            }
+
+            // Объединяем части обратно
+            nameField.value = parts.join('');
+        }
+
+        function updateCaptains() {
+            const institute = document.getElementById('institute').value;
+            const captainsSelect = document.getElementById('captain_id');
+            captainsSelect.innerHTML = '';
+
+            if (institutesCaptains[institute]) {
+                institutesCaptains[institute].forEach(captain => {
+                    const option = document.createElement('option');
+                    option.value = captain.id;
+                    option.text = captain.full_name;
+                    captainsSelect.appendChild(option);
+                });
+            }
+
+            updateGroupAndDates();
+        }
+
+        function updateGroupAndDates() {
+            const captainId = document.getElementById('captain_id').value;
+            let selectedCaptain;
+            Object.values(institutesCaptains).forEach(captains => {
+                const captain = captains.find(captain => captain.id == captainId);
+                if (captain) {
+                    selectedCaptain = captain;
+                }
+            });
+
+            if (selectedCaptain) {
+                document.getElementById('group').value = selectedCaptain.group;
+                document.getElementById('start_date').value = selectedCaptain.start_date;
+                document.getElementById('end_date').value = selectedCaptain.end_date;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('institute').addEventListener('change', updateCaptains);
+            document.getElementById('captain_id').addEventListener('change', updateGroupAndDates);
+            updateCaptains();
+        });
+    </script>
+</head>
+<body>
+<div class="container mt-5">
+    <div class="card shadow-lg p-4">
+        <h1 class="title-center">Регистрация</h1>
+        {% if message %}
+        <div class="alert alert-{{ message_type }}" role="alert">
+            {{ message }}
+        </div>
+        {% endif %}
+        <form method="post">
+            <div class="form-group">
+                <label for="full_name">Ваше ФИО <span style="color: #6c757d;">(Пример: Иванов Иван Иванович)</span></label>
+                <input type="text" class="form-control" id="full_name" name="full_name" value="{{ full_name or '' }}" required onblur="capitalizeName()">
+            </div>
+            <div class="form-group">
+                <label for="email">E-mail</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ email or '' }}" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="confirm_password">Подтвердите пароль</label>
+                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+            </div>
+            <div class="form-group">
+                <label for="institute">Институт</label>
+                <select class="form-control" id="institute" name="institute" required>
+                    <option value="institute_1" {% if institute == 'institute_1' %}selected{% endif %}>Институт информационных технологий</option>
+                    <option value="institute_2" {% if institute == 'institute_2' %}selected{% endif %}>Институт ядерной энергии и промышленности</option>
+                    <option value="institute_3" {% if institute == 'institute_3' %}selected{% endif %}>Юридический институт</option>
+                    <option value="institute_4" {% if institute == 'institute_4' %}selected{% endif %}>Морской институт</option>
+                    <option value="institute_5" {% if institute == 'institute_5' %}selected{% endif %}>Институт радиоэлектроники и интеллектуальных технических систем</option>
+                    <option value="institute_6" {% if institute == 'institute_6' %}selected{% endif %}>Институт финансов, экономики и управления</option>
+                    <option value="institute_7" {% if institute == 'institute_7' %}selected{% endif %}>Политехнический институт</option>
+                    <option value="institute_8" {% if institute == 'institute_8' %}selected{% endif %}>Институт общественных наук и международных отношений</option>
+                    <option value="institute_9" {% if institute == 'institute_9' %}selected{% endif %}>Гуманитарно-педагогический институт</option>
+                    <option value="institute_10" {% if institute == 'institute_10' %}selected{% endif %}>Институт фундаментальной медицины и здоровьесбережения</option>
+                    <option value="institute_11" {% if institute == 'institute_11' %}selected{% endif %}>Институт развития города</option>
+                    <option value="institute_12" {% if institute == 'institute_12' %}selected{% endif %}>Институт перспективных исследований</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="captain_id">Выберите старосту</label>
+                <select class="form-control" id="captain_id" name="captain_id" required>
+                </select>
+            </div>
+            <div class="form-group hidden">
+                <label for="group">Учебная группа</label>
+                <input type="text" class="form-control" id="group" name="group" value="Без группы" readonly>
+            </div>
+            <div class="form-row hidden">
+                <div class="form-group col-md-6">
+                    <label for="start_date">Начало обучения</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" readonly>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="end_date">Конец обучения</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" readonly>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block mt-4">Зарегистрироваться</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary btn-block">Отменить</a>
+        </form>
+    </div>
+</div>
+</body>
+</html>

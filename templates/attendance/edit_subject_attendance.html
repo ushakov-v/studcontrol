@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Изменить посещаемость предмета {{ subject.name }}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            .title-center {
+                font-size: 28px;
+                text-align: center;
+            }
+
+            .table th, .table td {
+                font-size: 14px;
+                padding: 5px;
+            }
+
+            .action-buttons a {
+                margin-bottom: 5px;
+                width: 100%;
+                text-align: center;
+            }
+
+            .table .btn {
+                margin-bottom: 10px;
+            }
+
+            .fixed-button {
+                position: static;
+                width: 196px;
+                display: inline-block;
+                text-align: right;
+                margin-top: 20px;
+                margin-left: auto;
+                margin-right: 4%;
+            }
+
+            .form-row {
+                display: flex;
+                flex-wrap: wrap;
+            }
+
+            .form-group.col-md-4 {
+                flex: 0 0 100%;
+                max-width: 100%;
+            }
+        }
+    </style>
+    <script>
+        function capitalizeTopic() {
+            const topicField = document.getElementById('new_topic');
+            let topicValue = topicField.value.trim();
+            if (topicValue.length > 0) {
+                topicField.value = topicValue.charAt(0).toUpperCase() + topicValue.slice(1);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('new_topic').addEventListener('blur', capitalizeTopic);
+        });
+    </script>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5 mb-5">
+        <h1 class="title-center">Изменить посещаемость предмета</h1>
+        <h5 class="mb-4">Предмет: {{ subject.name }}</h5>
+        <form method="POST">
+            <div class="form-row">
+                <div class="form-group col-md-4">
+                    <label for="new_date">Дата:</label>
+                    <input type="date" id="new_date" name="new_date" class="form-control" value="{{ date }}" onkeydown="return false;">
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="new_activity">Тип занятия:</label>
+                    <select id="new_activity" name="new_activity" class="form-control">
+                        <option value="lecture" {% if activity == 'lecture' %}selected{% endif %}>Лекция</option>
+                        <option value="practice" {% if activity == 'practice' %}selected{% endif %}>Практическое занятие</option>
+                        <option value="laboratory" {% if activity == 'laboratory' %}selected{% endif %}>Лабораторное занятие</option>
+                    </select>
+                </div>
+                <div class="form-group col-md-4">
+                    <label for="new_study_time">Время занятия:</label>
+                    <select id="new_study_time" name="new_study_time" class="form-control">
+                        <option value="1" {% if study_time == '1' %}selected{% endif %}>8:30 - 10:00</option>
+                        <option value="2" {% if study_time == '2' %}selected{% endif %}>10:10 - 11:40</option>
+                        <option value="3" {% if study_time == '3' %}selected{% endif %}>11:50 - 13:20</option>
+                        <option value="4" {% if study_time == '4' %}selected{% endif %}>14:00 - 15:30</option>
+                        <option value="5" {% if study_time == '5' %}selected{% endif %}>15:40 - 17:10</option>
+                        <option value="6" {% if study_time == '6' %}selected{% endif %}>17:20 - 18:50</option>
+                        <option value="7" {% if study_time == '7' %}selected{% endif %}>19:00 - 20:30</option>
+                        <option value="8" {% if study_time == '8' %}selected{% endif %}>20:40 - 22:10</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="new_topic">Тема:</label>
+                <input type="text" id="new_topic" name="new_topic" class="form-control" value="{{ topic }}" required>
+            </div>
+            <br>
+            <table class="table">
+                <thead>
+                <tr>
+                    <th style="width: 380px;">ФИО студента</th>
+                    <th style="width: 170px;">Подгруппа</th>
+                    <th style="width: 560px;">Статус</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for student in students %}
+                {% if attendance_data.get(student.id) or student.id in students_with_remote_learning %}
+                <tr>
+                    <td>{{ student.name }}</td>
+                    <td>
+                        {% if student.subgroup == 'whole_group' %}
+                        Вся группа
+                        {% elif student.subgroup == 'subgroup1' %}
+                        Подгруппа 1
+                        {% elif student.subgroup == 'subgroup2' %}
+                        Подгруппа 2
+                        {% else %}
+                        Неизвестная подгруппа
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if student.id in students_with_remote_learning %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="status_{{ student.id }}" id="remote_{{ student.id }}" value="Remote" checked>
+                            <label class="form-check-label" for="remote_{{ student.id }}">Дистанционное обучение</label>
+                        </div>
+                        {% else %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="status_{{ student.id }}" id="present_{{ student.id }}" value="Present"
+                                   {% if attendance_data.get(student.id) and attendance_data[student.id].status == 'Present' %} checked {% endif %}>
+                            <label class="form-check-label" for="present_{{ student.id }}">Присутствовал</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="status_{{ student.id }}" id="excused_{{ student.id }}" value="Excused"
+                                   {% if attendance_data.get(student.id) and attendance_data[student.id].status == 'Excused' %} checked {% endif %}>
+                            <label class="form-check-label" for="excused_{{ student.id }}">Уважительная причина</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="status_{{ student.id }}" id="absent_{{ student.id }}" value="Absent"
+                                   {% if attendance_data.get(student.id) and attendance_data[student.id].status == 'Absent' %} checked {% endif %}>
+                            <label class="form-check-label" for="absent_{{ student.id }}">Отсутствовал</label>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+                </tbody>
+            </table>
+            <div class="d-flex justify-content float-right mt-2">
+                <button type="submit" class="btn btn-primary mr-2">Сохранить изменения</button>
+                <a href="{{ url_for('view_subject_attendance', subject_id=subject.id, week=selected_week, date=date ~ ' - ' ~ study_time ~ ' - ' ~ activity, user_id=user_id) }}" class="btn btn-secondary">Назад</a>
+            </div>
+        </form>
+    </div>
+    {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
+    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору групп</a>
+    {% endif %}
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

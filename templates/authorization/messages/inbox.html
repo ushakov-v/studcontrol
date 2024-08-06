@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Входящие сообщения</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        .table th, .table td {
+            vertical-align: middle;
+        }
+        .table a {
+            padding: 0 !important;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title-center {
+                font-size: 28px;
+                text-align: center;
+            }
+
+            .table-responsive {
+                border: 0;
+            }
+
+            .table thead {
+                display: none;
+            }
+
+            .table tr {
+                display: block;
+                margin-bottom: 15px;
+                border-bottom: 1px solid #ddd;
+            }
+
+            .table td {
+                display: block;
+                text-align: right;
+                font-size: 14px;
+                border-bottom: 0;
+                position: relative;
+                padding-left: 50%;
+            }
+
+            .table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 10px;
+                width: 45%;
+                padding-right: 10px;
+                white-space: nowrap;
+                text-align: left;
+                font-weight: bold;
+            }
+
+            .text-right {
+                text-align: center;
+            }
+
+            .table {
+                border: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <h1 class="title-center">Входящие сообщения</h1>
+        {% if messages %}
+        <form method="POST" id="messageForm">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th><input type="checkbox" id="select_all"></th>
+                        <th>Отправитель</th>
+                        <th>Тема</th>
+                        <th>Дата</th>
+                        <th>Статус</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for message in messages %}
+                    <tr class="{% if not message.is_read %}font-weight-bold{% endif %}">
+                        <td data-label="Выбрать"><input type="checkbox" name="selected_messages" value="{{ message.id }}" class="message-checkbox"></td>
+                        <td data-label="Отправитель">{{ message.sender.full_name }}</td>
+                        <td data-label="Тема"><a href="{{ url_for('view_message', message_id=message.id) }}">{{ message.subject }}</a></td>
+                        <td data-label="Дата">{{ message.local_timestamp.strftime('%d.%m.%Y %H:%M') }}</td>
+                        <td data-label="Статус">{{ 'Прочитано' if message.is_read else 'Не прочитано' }}</td>
+                    </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="text-right">
+                <button type="submit" id="deleteButton" class="btn btn-danger mt-2" disabled>Удалить выбранные сообщения</button>
+            </div>
+        </form>
+        {% else %}
+        <div class="alert alert-info" role="alert">
+            У вас нет новых сообщений.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% include 'footer.html' %}
+<script>
+    document.getElementById('select_all').addEventListener('click', function(event) {
+        const checkboxes = document.querySelectorAll('input[name="selected_messages"]');
+        checkboxes.forEach(checkbox => checkbox.checked = event.target.checked);
+        toggleDeleteButton();
+    });
+
+    document.querySelectorAll('.message-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', toggleDeleteButton);
+    });
+
+    function toggleDeleteButton() {
+        const checkboxes = document.querySelectorAll('input[name="selected_messages"]:checked');
+        const deleteButton = document.getElementById('deleteButton');
+        deleteButton.disabled = checkboxes.length === 0;
+    }
+</script>
+</body>
+</html>

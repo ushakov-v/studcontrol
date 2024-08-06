@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Просмотр сообщения</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .title-center {
+                font-size: 28px;
+                text-align: center;
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+
+            .card-title {
+                font-size: 20px;
+            }
+
+            .btn {
+                width: 100%;
+                margin-top: 10px;
+            }
+
+            h4 {
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5">
+        <h1 class="title-center">Просмотр сообщения</h1>
+        <div class="card mb-3">
+            <div class="card-body">
+                <h4 class="card-title">{{ message.subject }}</h4>
+                <p class="card-text"><strong>Отправитель:</strong> {{ message.sender.full_name }}</p>
+                <p class="card-text"><strong>Дата:</strong> {{ message.timestamp.strftime('%d.%m.%Y %H:%M') }}</p>
+                <p class="card-text">{{ message.body }}</p>
+                {% if message.request_id %}
+                <a href="{{ url_for('manage_requests', request_id=message.request_id) }}" class="btn btn-primary float-right">Просмотреть запрос</a>
+                {% endif %}
+                <a href="{{ url_for('inbox') }}" class="btn btn-secondary">Назад к входящим</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'footer.html' %}
+</body>
+</html>

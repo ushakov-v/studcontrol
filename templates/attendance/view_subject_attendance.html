@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Посещаемость предмета {{ subject.name }}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <style>
+        @media (max-width: 768px) {
+            .title-center {
+                font-size: 28px;
+            }
+
+            .table th, .table td {
+                font-size: 14px;
+                padding: 5px;
+            }
+
+            .action-buttons a {
+                margin-bottom: 5px;
+                width: 100%;
+                text-align: center;
+            }
+
+            .fixed-button {
+                position: static;
+                width: 196px;
+                display: inline-block;
+                text-align: right;
+                margin-top: 20px;
+                margin-left: auto;
+                margin-right: 4%;
+            }
+
+            .flex-buttons {
+                display: flex;
+                flex-direction: row;
+            }
+
+            .flex-buttons .btn {
+                font-size: 14px;
+            }
+        }
+    </style>
+    <script>
+        function saveAndSubmitForm() {
+            const week = document.getElementById('week').value;
+            const date = document.getElementById('date').value;
+
+            localStorage.setItem('selected_week', week);
+            localStorage.setItem('selected_date', date);
+
+            document.getElementById('attendanceForm').submit();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedWeek = localStorage.getItem('selected_week');
+            const savedDate = localStorage.getItem('selected_date');
+
+            if (savedWeek) {
+                document.getElementById('week').value = savedWeek;
+                if (savedDate) {
+                    document.getElementById('date').disabled = false;
+                    document.getElementById('date').value = savedDate;
+                }
+            }
+
+            document.getElementById('week').addEventListener('change', function() {
+                const week = this.value;
+                const dateSelect = document.getElementById('date');
+
+                // Очистить текущие опции
+                dateSelect.innerHTML = '';
+
+                // Добавить новые опции, соответствующие выбранной неделе
+                if (week) {
+                    const filteredDates = {{ dates|tojson }};
+                    const weekDates = {{ week_dates|tojson }}[week];
+
+                    if (weekDates) {
+                        filteredDates.forEach(date => {
+                            if (weekDates.includes(date[0].split(' ')[0])) {
+                                const option = document.createElement('option');
+                                option.value = `${date[0]} - ${date[2]} - ${date[1]}`;
+                                option.text = `${new Date(date[0]).toLocaleDateString('ru-RU', {weekday: 'long'})} - ${new Date(date[0]).toLocaleDateString('ru-RU')} (${date[2]}) (${date[1]})`;
+                                dateSelect.appendChild(option);
+                            }
+                        });
+                    }
+
+                    // Автоматически выбрать первую доступную дату
+                    if (dateSelect.options.length > 0) {
+                        dateSelect.disabled = false;
+                        dateSelect.selectedIndex = 0;
+                        // Сохранить первую доступную дату и обновить форму
+                        saveAndSubmitForm();
+                    } else {
+                        dateSelect.disabled = true;
+                    }
+                } else {
+                    dateSelect.disabled = true;
+                }
+            });
+
+            function checkRemoteLearning(studentId) {
+                const remoteLearningDates = {{ remote_learning_dates|tojson }};
+                const currentDate = new Date().toISOString().split('T')[0];
+                const studentRemoteDates = remoteLearningDates[studentId] || [];
+
+                for (const period of studentRemoteDates) {
+                    const startDate = period.start_date;
+                    const endDate = period.end_date;
+                    if (currentDate >= startDate && currentDate <= endDate) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // Добавление класса для строки студентов на основе проверки дистанционного обучения
+            const studentRows = document.querySelectorAll('tr[data-student-id]');
+            studentRows.forEach(row => {
+                const studentId = row.getAttribute('data-student-id');
+                if (checkRemoteLearning(studentId)) {
+                    row.classList.add('remote-learning');
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+<div class="content-wrapper mb-5">
+    {% include 'navbar.html' %}
+    <div class="container mt-5 mb-5">
+        <h1 class="title-center">Посещаемость предмета</h1>
+        <h5 class="mb-4">Предмет: {{ subject.name }}</h5>
+        <h5 class="text mb-4">
+            Преподаватель:
+            {% set teachers_info = [] %}
+            {% for teacher in teachers %}
+            {% set degree = '' %}
+            {% if teacher.academic_degree == 'doctor' %}
+            {% set degree = 'Доктор наук' %}
+            {% elif teacher.academic_degree == 'candidate' %}
+            {% set degree = 'Кандидат наук' %}
+            {% endif %}
+
+            {% set title = '' %}
+            {% if teacher.academic_title == 'assistant' %}
+            {% set title = 'Ассистент' %}
+            {% elif teacher.academic_title == 'associate' %}
+            {% set title = 'Доцент' %}
+            {% elif teacher.academic_title == 'teacher' %}
+            {% set title = 'Преподаватель' %}
+            {% elif teacher.academic_title == 'professor' %}
+            {% set title = 'Профессор' %}
+            {% elif teacher.academic_title == 'senior_teacher' %}
+            {% set title = 'Старший преподаватель' %}
+            {% endif %}
+
+            {% set full_title = (degree + ', ' + title).strip(', ') %}
+            {% set teacher_info = teacher.name + ((' (' + full_title + ')') if full_title else '') %}
+            {% set _ = teachers_info.append(teacher_info) %}
+            {% endfor %}
+            {{ teachers_info|join(', ') }}
+        </h5>
+        <form id="attendanceForm" method="GET" action="{{ url_for('view_subject_attendance', subject_id=subject.id) }}" class="mb-3">
+            <input type="hidden" name="user_id" value="{{ user_id }}">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label for="week">Неделя:</label>
+                    <select id="week" name="week" class="form-control" onchange="saveAndSubmitForm()">
+                        <option value="">Выберите неделю</option>
+                        {% for week, date_range in weeks %}
+                        <option value="{{ week }}" {% if week == selected_week %}selected{% endif %}>Неделя {{ loop.index }} ({{ date_range }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group col-md-6">
+                    <label for="date">Дата, время и тип занятия:</label>
+                    <select id="date" name="date" class="form-control" {% if not selected_week %}disabled{% endif %} onchange="saveAndSubmitForm()">
+                        {% if selected_week %}
+                        {% for date, activity, study_time, topic in dates %}
+                        {% set day_of_week = week_dates | selectattr('0', 'equalto', date.strftime('%Y-%m-%d')) | map(attribute='1') | first %}
+                        <option value="{{ date }} - {{ study_time }} - {{ activity }}" {% if date ~ ' - ' ~ study_time ~ ' - ' ~ activity == selected_date %}selected{% endif %}>
+                        {{ day_of_week }} - {{ date.strftime('%d.%m.%Y') }}
+                        {% if study_time == '1' %}
+                        (8:30 - 10:00)
+                        {% elif study_time == '2' %}
+                        (10:10 - 11:40)
+                        {% elif study_time == '3' %}
+                        (11:50 - 13:20)
+                        {% elif study_time == '4' %}
+                        (14:00 - 15:30)
+                        {% elif study_time == '5' %}
+                        (15:40 - 17:10)
+                        {% elif study_time == '6' %}
+                        (17:20 - 18:50)
+                        {% elif study_time == '7' %}
+                        (19:00 - 20:30)
+                        {% elif study_time == '8' %}
+                        (20:40 - 22:10)
+                        {% else %}
+                        (Неизвестное время проведения занятия)
+                        {% endif %}
+                        {% if activity == 'lecture' %}
+                        (Л)
+                        {% elif activity == 'practice' %}
+                        (ПЗ)
+                        {% elif activity == 'laboratory' %}
+                        (ЛЗ)
+                        {% else %}
+                        (Неизвестный тип занятия)
+                        {% endif %}
+                        </option>
+                        {% endfor %}
+                        {% endif %}
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        {% if selected_date %}
+        <h5 class="text mb-4">Тема: {{ selected_topic }}</h5>
+        {% endif %}
+
+        <div class="form-group">
+            {% if selected_date %}
+            {% set date_parts = selected_date.split(' - ') %}
+            {% if date_parts and date_parts|length >= 2 %}
+            {% if current_user.id == user_id or current_user.role == 'admin' %}
+            <div class="flex-buttons">
+                <a href="{{ url_for('edit_subject_attendance', subject_id=subject.id, date=date_parts[0], study_time=date_parts[1], activity=date_parts[2], week=selected_week, user_id=user_id) }}" class="btn btn-info mr-2 mb-2 mt-2">Изменить посещаемость</a>
+                <a href="{{ url_for('delete_subject_attendance', subject_id=subject.id, date=selected_date, user_id=user_id) }}" class="btn btn-danger mr-2 mb-2 mt-2" onclick="return confirm('Вы уверены, что хотите удалить посещаемость?');">Удалить посещаемость</a>
+            </div>
+            {% endif %}
+            {% endif %}
+            {% endif %}
+        </div>
+        <div id="attendanceTable">
+            {% if selected_date and attendances %}
+            <table class="table">
+                <thead>
+                <tr>
+                    <th style="width: 450px;">ФИО студента</th>
+                    <th style="width: 270px;">Подгруппа</th>
+                    <th style="width: 390px;">Статус</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for student in all_students %}
+                <tr data-student-id="{{ student.id }}">
+                    <td>{{ student.name }}</td>
+                    <td>
+                        {% if student.subgroup == 'whole_group' %}
+                        Вся группа
+                        {% elif student.subgroup == 'subgroup1' %}
+                        Подгруппа 1
+                        {% elif student.subgroup == 'subgroup2' %}
+                        Подгруппа 2
+                        {% else %}
+                        Неизвестная подгруппа
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if student.id in attendance_data %}
+                        {% for attendance in attendance_data[student.id] %}
+                        {% if attendance.status == 'Remote' %}
+                        Дистанционное обучение
+                        {% elif attendance.status == 'Present' %}
+                        Присутствовал
+                        {% elif attendance.status == 'Excused' %}
+                        Уважительная причина
+                        {% elif attendance.status == 'Absent' %}
+                        Отсутствовал
+                        {% else %}
+                        {{ attendance.status }}
+                        {% endif %}
+                        {% endfor %}
+                        {% else %}
+                        Нет данных
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="alert alert-info" role="alert" id="noAttendanceAlert">
+                Посещаемость не найдена для выбранной даты.
+            </div>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('subject_list', semester=selected_semester, user_id=user_id) }}" class="btn btn-secondary mt-2 float-right">Назад к списку предметов</a>
+    </div>
+    {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
+    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору группы</a>
+    {% endif %}
+</div>
+{% include 'footer.html' %}
+</body>
+</html>
