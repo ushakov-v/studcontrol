@@ -255,6 +255,10 @@ th.subject-name-column {
     text-align: center;
 }
 
+.center-alert {
+    text-align: center;
+}
+
 .form-institute-center {
     width: 600px;
     margin: 0 auto;
