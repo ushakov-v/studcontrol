@@ -6,14 +6,15 @@ from models import db, Subject, Attendance, Teacher
 def delete_subject_route(subject_id):
     selected_semester = request.args.get('semester', type=int, default=1)
 
+    # Получение предмета по ID или возврат ошибки 404, если не найден
     subject = Subject.query.get_or_404(subject_id)
 
     # Проверяем, что текущий пользователь является владельцем или администратором
     if subject.user_id != current_user.id and current_user.role != 'admin':
         return render_template('error.html', message='У вас нет прав на удаление этого предмета.')
 
-    # Удаление записей о посещаемости для данного предмета
-    attendances = Attendance.query.filter_by(subject=subject.name).all()
+    # Удаление записей о посещаемости для данного предмета по subject_id
+    attendances = Attendance.query.filter_by(subject_id=subject.id).all()
     for attendance in attendances:
         db.session.delete(attendance)
 
@@ -26,4 +27,5 @@ def delete_subject_route(subject_id):
     db.session.delete(subject)
     db.session.commit()
 
+    # Перенаправление на список предметов с текущим пользователем и выбранным семестром
     return redirect(url_for('subject_list', user_id=subject.user_id, semester=selected_semester))
