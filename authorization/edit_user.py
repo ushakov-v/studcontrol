@@ -24,6 +24,13 @@ def edit_user_route(user_id):
             "end_date": captain.end_date.strftime('%Y-%m-%d')
         })
 
+    # Get the current captain for the student
+    current_captain_id = None
+    if user.role == 'student':
+        current_captain_request = Request.query.filter_by(student_id=user_id, status='approved').first()
+        if current_captain_request:
+            current_captain_id = current_captain_request.captain_id
+
     if request.method == 'POST':
         full_name = request.form.get('full_name')
         email = request.form.get('email')
@@ -40,14 +47,14 @@ def edit_user_route(user_id):
         if not re.match(r'^[А-Яа-яЁё\s-]+$', full_name):
             message = 'ФИО должно содержать только буквы русского алфавита.'
             message_type = 'danger'
-            return render_template('authorization/edit_user.html', user=user, institutes_captains=institutes_captains, message=message, message_type=message_type)
+            return render_template('authorization/edit_user.html', user=user, institutes_captains=institutes_captains, current_captain_id=current_captain_id, message=message, message_type=message_type)
 
         # Validate email
         email_regex = r'^[^@]+@[^@]+\.[^@]+$'
         if not re.match(email_regex, email):
             message = 'Введите корректный email адрес.'
             message_type = 'danger'
-            return render_template('authorization/edit_user.html', user=user, institutes_captains=institutes_captains, message=message, message_type=message_type)
+            return render_template('authorization/edit_user.html', user=user, institutes_captains=institutes_captains, current_captain_id=current_captain_id, message=message, message_type=message_type)
 
         if role == 'captain':
             # Validate dates
@@ -57,12 +64,12 @@ def edit_user_route(user_id):
             except ValueError:
                 message = 'Неправильный формат даты.'
                 message_type = 'danger'
-                return render_template('authorization/edit_user.html', user=user, institutes_captains=institutes_captains, message=message, message_type=message_type)
+                return render_template('authorization/edit_user.html', user=user, institutes_captains=institutes_captains, current_captain_id=current_captain_id, message=message, message_type=message_type)
 
             if start_date >= end_date:
                 message = 'Дата начала обучения должна быть раньше даты окончания.'
                 message_type = 'danger'
-                return render_template('authorization/edit_user.html', user=user, institutes_captains=institutes_captains, message=message, message_type=message_type)
+                return render_template('authorization/edit_user.html', user=user, institutes_captains=institutes_captains, current_captain_id=current_captain_id, message=message, message_type=message_type)
 
         user.full_name = full_name
         user.email = email
@@ -101,4 +108,4 @@ def edit_user_route(user_id):
         db.session.commit()
         return redirect(url_for('user_list'))
 
-    return render_template('authorization/edit_user.html', user=user, institutes_captains=institutes_captains, message=message, message_type=message_type)
+    return render_template('authorization/edit_user.html', user=user, institutes_captains=institutes_captains, current_captain_id=current_captain_id, message=message, message_type=message_type)

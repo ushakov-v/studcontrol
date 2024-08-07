@@ -120,6 +120,7 @@
     </style>
     <script>
         const institutesCaptains = {{ institutes_captains | tojson }};
+        const currentCaptainId = {{ current_captain_id | tojson }};
 
         function capitalizeName() {
             const nameField = document.getElementById('full_name');
@@ -146,6 +147,9 @@
                     const option = document.createElement('option');
                     option.value = captain.id;
                     option.text = captain.full_name;
+                    if (captain.id == currentCaptainId) {
+                        option.selected = true; // Устанавливаем выбранный староста
+                    }
                     captainsSelect.appendChild(option);
                 });
             }
@@ -274,20 +278,20 @@
                     <select class="form-control" id="captain_id" name="captain_id"></select>
                 </div>
                 <div class="form-group editable-field hidden">
-                    <label for="group">Учебная группа</label>
-                    <input type="text" class="form-control" id="group" name="group" value="{{ user.group }}">
+                    <label for="editable_group">Учебная группа</label>
+                    <input type="text" class="form-control" id="editable_group" name="group" value="{{ user.group }}">
                 </div>
                 <div class="form-group student-field hidden">
-                    <label for="group">Учебная группа</label>
-                    <input type="text" class="form-control" id="group" name="group" value="{{ user.group }}" readonly>
+                    <label for="student_group">Учебная группа</label>
+                    <input type="text" class="form-control" id="student_group" name="group" value="{{ user.group }}" readonly>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-6 editable-field hidden">
-                        <label for="start_date">Начало обучения</label>
-                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ user.start_date }}">
+                        <label for="editable_start_date">Начало обучения</label>
+                        <input type="date" class="form-control" id="editable_start_date" name="start_date" value="{{ user.start_date }}">
                     </div>
                     <div class="form-group col-md-6 editable-field hidden">
-                        <label for="end_date">Конец обучения
+                        <label for="editable_end_date">Конец обучения
                             <span class="tooltip-icon">?
                                 <span class="tooltip-text">
                                     Даты нужны для подсчёта количества семестров<br><br>
@@ -300,16 +304,16 @@
                                 </span>
                             </span>
                         </label>
-                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ user.end_date }}">
+                        <input type="date" class="form-control" id="editable_end_date" name="end_date" value="{{ user.end_date }}">
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group col-md-6 student-field hidden">
-                        <label for="start_date">Начало обучения</label>
-                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ user.start_date }}" readonly>
+                        <label for="student_start_date">Начало обучения</label>
+                        <input type="date" class="form-control" id="student_start_date" name="start_date" value="{{ user.start_date }}" readonly>
                     </div>
                     <div class="form-group col-md-6 student-field hidden">
-                        <label for="end_date">Конец обучения
+                        <label for="student_end_date">Конец обучения
                             <span class="tooltip-icon">?
                                 <span class="tooltip-text">
                                     Даты нужны для подсчёта количества семестров<br><br>
@@ -322,7 +326,7 @@
                                 </span>
                             </span>
                         </label>
-                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ user.end_date }}" readonly>
+                        <input type="date" class="form-control" id="student_end_date" name="end_date" value="{{ user.end_date }}" readonly>
                     </div>
                 </div>
                 <div class="d-flex justify-content float-right mt-4">
