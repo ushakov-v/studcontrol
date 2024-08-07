@@ -79,7 +79,7 @@ def view_subject_attendance_route(subject_id):
         user_id=user_id
     ).distinct().all()
 
-    dates = [(attendance.date, attendance.activity, attendance.study_time, attendance.topic) for attendance in attendances]
+    dates = sorted([(attendance.date, attendance.activity, attendance.study_time, attendance.topic) for attendance in attendances], key=lambda x: (x[0], x[2], x[1]))
 
     # Фильтрация дат на основе выбранной недели
     filtered_dates = [date for date in dates if date[0].strftime('%Y-%m-%d') in week_dates]

@@ -201,7 +201,7 @@
                     <input type="text" class="form-control" id="email" name="email" value="{{ user.email }}">
                 </div>
                 <div class="form-group mr-2">
-                    <label for="instituteFilter">Институт:</label>
+                    <label for="instituteFilter">Институт</label>
                     <select class="form-control" id="instituteFilter" name="institute">
                         <option value="institute_1" {% if user.institute == 'institute_1' %}selected{% endif %}>Институт информационных технологий</option>
                         <option value="institute_2" {% if user.institute == 'institute_2' %}selected{% endif %}>Институт ядерной энергии и промышленности</option>
@@ -219,7 +219,7 @@
                 </div>
                 {% if user.role == 'student' %}
                 <div class="form-group">
-                    <label for="captain_id">Староста группы:</label>
+                    <label for="captain_id">Староста группы</label>
                     <select class="form-control" id="captain_id" name="captain_id"></select>
                 </div>
                 <div class="form-group hidden">

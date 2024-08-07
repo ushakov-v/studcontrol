@@ -18,7 +18,7 @@ def manage_attendance_route():
     viewing_other_group = current_user.id != user_id
 
     if current_user.id != user_id and current_user.role != 'admin':
-        return render_template('error.html', message='У вас нет прав на выполнение этого действия.', viewing_attendance_user=user)
+        return render_template('error.html', message='У вас нет прав на выполнение этого действия.')
 
     # Проверка прав доступа пользователя
     if current_user.role == 'student':
@@ -99,7 +99,7 @@ def manage_attendance_route():
         return render_template('error.html', message=str(e))
 
     # Получение списка предметов
-    subjects = Subject.query.filter_by(user_id=user_id, semester=selected_semester).all() if selected_semester else []
+    subjects = Subject.query.filter_by(user_id=user_id, semester=selected_semester).order_by(Subject.name).all() if selected_semester else []
 
     # Получение дат дистанционного обучения для всех студентов
     remote_learning_dates = {}
@@ -110,4 +110,4 @@ def manage_attendance_route():
             for rd in remote_dates
         ]
 
-    return render_template('attendance/attendance.html', success_message=success_message, students=students, subjects=subjects, selected_semester=selected_semester, selected_subgroup=selected_subgroup, selected_subject=selected_subject, total_semesters=total_semesters, date=date, start_date=start_date, end_date=end_date, user_id=user_id, remote_learning_dates=remote_learning_dates, viewing_other_group=viewing_other_group)
+    return render_template('attendance/attendance.html', success_message=success_message, students=students, subjects=subjects, selected_semester=selected_semester, selected_subgroup=selected_subgroup, selected_subject=selected_subject, total_semesters=total_semesters, date=date, start_date=start_date, end_date=end_date, user_id=user_id, remote_learning_dates=remote_learning_dates, viewing_attendance_user=user, viewing_other_group=viewing_other_group)
