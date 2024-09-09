@@ -1,9 +1,8 @@
-from flask import render_template, request, redirect, url_for
+from flask import redirect, url_for, request, render_template
 from flask_login import login_required, current_user
 from models import Student, Attendance, User, RemoteLearningDate, db
 from datetime import datetime
 import json
-
 
 @login_required
 def toggle_remote_learning_route(student_id):
@@ -25,6 +24,9 @@ def toggle_remote_learning_route(student_id):
             remote_learning_date = RemoteLearningDate.query.filter_by(student_id=student_id, semester=semester).first()
             if remote_learning_date:
                 db.session.delete(remote_learning_date)
+                db.session.commit()  # Подтверждение удаления дистанционного обучения
+            return redirect(url_for('view_student', student_id=student.id, user_id=student.user_id))
+
         else:
             remote_learning_date = RemoteLearningDate.query.filter_by(student_id=student_id, semester=semester).first()
             if not remote_learning_date:

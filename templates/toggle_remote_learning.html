@@ -68,6 +68,11 @@
         .btn-block + .btn-block {
             margin-top: 10px !important;
         }
+
+        .btn-disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
     </style>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -75,16 +80,21 @@
             const semesterSelect = document.getElementById('semester');
             const startDateInput = document.getElementById('start_date');
             const endDateInput = document.getElementById('end_date');
+            const removeRemoteLearningButton = document.getElementById('remove_remote_learning_btn');
 
             function updateDates() {
                 const selectedSemester = semesterSelect.value;
                 const period = remoteLearningDates.find(period => period.semester == selectedSemester);
+
+                // Обновление полей с датами
                 if (period) {
                     startDateInput.value = period.start_date;
                     endDateInput.value = period.end_date;
+                    removeRemoteLearningButton.classList.remove('btn-disabled');
                 } else {
                     startDateInput.value = '';
                     endDateInput.value = '';
+                    removeRemoteLearningButton.classList.add('btn-disabled');  // Отключить кнопку
                 }
             }
 
@@ -118,9 +128,7 @@
                 </div>
                 <button type="submit" class="btn btn-primary btn-block mt-4">Сохранить</button>
                 <a href="{{ url_for('view_student', student_id=student.id, user_id=user_id) }}" class="btn btn-secondary btn-block">Отменить</a>
-                {% if student.remote_learning %}
-                <button type="submit" class="btn btn-danger btn-block" name="remove_remote_learning">Вывести из дистанционного обучения</button>
-                {% endif %}
+                <button type="submit" class="btn btn-danger btn-block" id="remove_remote_learning_btn" name="remove_remote_learning">Перевести на очное обучение</button>
             </form>
         </div>
     </div>
