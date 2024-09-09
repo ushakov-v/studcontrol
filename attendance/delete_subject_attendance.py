@@ -33,10 +33,18 @@ def delete_subject_attendance_route(subject_id, date):
             return render_template('error.html', message='У вас нет доступа к этой группе.')
 
     # Split the date string into date, study time, and activity
-    selected_date_str, study_time, activity = date.split(' - ')
+    # Add a check to ensure the date is in the expected format
+    date_parts = date.split(' - ')
+    if len(date_parts) != 3:
+        return render_template('error.html', message='Неправильный формат даты. Ожидается: YYYY-MM-DD - время - активность')
+
+    selected_date_str, study_time, activity = date_parts
 
     # Parse the date from string format
-    selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+    try:
+        selected_date = datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+    except ValueError:
+        return render_template('error.html', message='Неправильный формат даты. Используйте формат YYYY-MM-DD.')
 
     # Fetch the subject by its ID
     subject = Subject.query.get(subject_id)
@@ -52,3 +60,4 @@ def delete_subject_attendance_route(subject_id, date):
 
     # Redirect to the view subject attendance page
     return redirect(url_for('view_subject_attendance', subject_id=subject_id, user_id=user_id))
+

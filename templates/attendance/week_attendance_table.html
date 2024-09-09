@@ -54,50 +54,6 @@
                 margin-right: 4%;
             }
         }
-        .tooltip-icon {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            background-color: #6c757d;
-            color: white;
-            text-align: center;
-            font-size: 14px;
-            line-height: 20px;
-            cursor: pointer;
-            margin-left: 5px;
-            position: relative;
-        }
-
-        .tooltip-icon:hover .tooltip-text {
-            display: block;
-        }
-
-        .tooltip-text {
-            display: none;
-            width: 200px;
-            background-color: #6c757d;
-            color: white;
-            text-align: center;
-            border-radius: 5px;
-            padding: 5px;
-            position: absolute;
-            z-index: 1;
-            bottom: 125%; /* Позиционирование сверху */
-            left: 50%;
-            margin-left: -100px;
-        }
-
-        .tooltip-text::after {
-            content: "";
-            position: absolute;
-            top: 100%; /* Снизу элемента tooltip */
-            left: 50%;
-            margin-left: -5px;
-            border-width: 5px;
-            border-style: solid;
-            border-color: #6c757d transparent transparent transparent;
-        }
     </style>
 </head>
 <body>
@@ -125,18 +81,12 @@
         </div>
 
         <div class="d-flex justify-content-end my-3">
-            <span class="tooltip-icon mt-2 mr-2">?
-                    <span class="tooltip-text">
-                        Экспортировать можно только таблицу с пропущенными часами
-                    </span>
-                </span>
             <a href="{{ url_for('export_attendance_excel', semester=selected_semester, user_id=user_id) }}" class="btn btn-primary">Экспорт в Excel</a>
         </div>
 
-        <!-- Контейнер для таблиц с прокруткой -->
         <div class="table-container-week">
-            <!-- Таблица по пропущенным занятиям -->
             {% if attendance_data %}
+            <!-- Таблица по пропущенным занятиям -->
             <table id="absences-table" class="table table-bordered">
                 <thead>
                 <tr>
@@ -156,35 +106,26 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for student, weeks in attendance_data.items() %}
+                {% for student, student_data in attendance_data.items() %}
                 <tr class="{% if student.expelled %}expelled{% endif %}">
                     <td class="wide-column fixed-column">{{ student.name }}</td>
-                    {% set total_absences_sum = 0 %}
-                    {% set total_unexcused_absences_sum = 0 %}
+
                     {% for week_offset in range(num_weeks) %}
                     {% set week = week_offset + 1 %}
                     <td class="wide-column-center" style="vertical-align: middle;">
-                        {% if weeks[week].total_absences == 'ДО' %}
-                        ДО
-                        {% else %}
-                        {{ weeks[week].total_absences }}
-                        {% set total_absences_sum = total_absences_sum + weeks[week].total_absences %}
-                        {% endif %}
+                        {{ student_data.attendance[week].total_absences }}
                     </td>
                     <td class="wide-column-center" style="vertical-align: middle;">
-                        {% if weeks[week].unexcused_absences == 'ДО' %}
-                        ДО
-                        {% else %}
-                        {{ weeks[week].unexcused_absences }}
-                        {% set total_unexcused_absences_sum = total_unexcused_absences_sum + weeks[week].unexcused_absences %}
-                        {% endif %}
+                        {{ student_data.attendance[week].unexcused_absences }}
                     </td>
                     {% endfor %}
+
+                    <!-- Итоговые данные -->
                     <td class="wide-column-center" style="vertical-align: middle;">
-                        {{ total_absences_sum }}
+                        {{ student_data.total_absences }}
                     </td>
                     <td class="wide-column-center" style="vertical-align: middle;">
-                        {{ total_unexcused_absences_sum }}
+                        {{ student_data.total_unexcused_absences }}
                     </td>
                 </tr>
                 {% endfor %}
@@ -211,40 +152,32 @@
                 </tr>
                 </thead>
                 <tbody>
-                {% for student, weeks in attendance_data.items() %}
+                {% for student, student_data in attendance_data.items() %}
                 <tr class="{% if student.expelled %}expelled{% endif %}">
                     <td class="wide-column fixed-column">{{ student.name }}</td>
-                    {% set total_hours_sum = 0 %}
-                    {% set total_unexcused_hours_sum = 0 %}
+
                     {% for week_offset in range(num_weeks) %}
                     {% set week = week_offset + 1 %}
                     <td class="wide-column-center" style="vertical-align: middle;">
-                        {% if weeks[week].total_absences == 'ДО' %}
-                        ДО
-                        {% else %}
-                        {{ weeks[week].total_absences * 2 }}
-                        {% set total_hours_sum = total_hours_sum + weeks[week].total_absences * 2 %}
-                        {% endif %}
+                        {{ student_data.attendance[week].hours_absences }}
                     </td>
                     <td class="wide-column-center" style="vertical-align: middle;">
-                        {% if weeks[week].unexcused_absences == 'ДО' %}
-                        ДО
-                        {% else %}
-                        {{ weeks[week].unexcused_absences * 2 }}
-                        {% set total_unexcused_hours_sum = total_unexcused_hours_sum + weeks[week].unexcused_absences * 2 %}
-                        {% endif %}
+                        {{ student_data.attendance[week].hours_unexcused_absences }}
                     </td>
                     {% endfor %}
+
+                    <!-- Итоговые данные для пропущенных часов -->
                     <td class="wide-column-center" style="vertical-align: middle;">
-                        {{ total_hours_sum }}
+                        {{ student_data.total_absences * 2 if student_data.total_absences != 'ДО' else 'ДО' }}
                     </td>
                     <td class="wide-column-center" style="vertical-align: middle;">
-                        {{ total_unexcused_hours_sum }}
+                        {{ student_data.total_unexcused_absences * 2 if student_data.total_unexcused_absences != 'ДО' else 'ДО' }}
                     </td>
                 </tr>
                 {% endfor %}
                 </tbody>
             </table>
+
             {% else %}
             <div class="alert alert-info full-width-table" role="alert">
                 Посещаемость не найдена для выбранного семестра.
@@ -252,10 +185,6 @@
             {% endif %}
         </div>
     </div>
-
-    {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
-    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору группы</a>
-    {% endif %}
 </div>
 {% include 'footer.html' %}
 <script>
