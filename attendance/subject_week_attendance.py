@@ -68,7 +68,7 @@ def subject_week_attendance_route():
     ).order_by(Student.name).all()
 
     # Получение списка предметов
-    subjects = Subject.query.filter_by(user_id=user_id, semester=selected_semester).order_by(Subject.name).all() if selected_semester else []
+    subjects = Subject.query.filter_by(user_id=user_id, semester=selected_semester).all() if selected_semester else []
 
     attendance_data = []
 
@@ -118,11 +118,20 @@ def subject_week_attendance_route():
             subject_details[subject][key].add(record['subgroup'])
             displayed_subjects.add(subject)
 
-    # Определение количества колонок для каждого предмета
+    # Определение минимального времени занятия для сортировки предметов
+    subject_times = {}
     for subject, details in subject_details.items():
-        subject_max_columns[subject] = len(details)
+        min_time = min(int(key[2]) for key in details.keys())  # Найти минимальное время занятия для предмета
+        subject_times[subject] = min_time
 
-    displayed_subjects = sorted(displayed_subjects)
+    # Сортировка предметов по минимальному времени занятия
+    displayed_subjects = sorted(displayed_subjects, key=lambda sub: subject_times[sub])
+
+    # Определение количества колонок для каждого предмета и сортировка по времени занятия внутри каждого предмета
+    for subject, details in subject_details.items():
+        sorted_details = sorted(details.items(), key=lambda x: int(x[0][2]))  # Сортировка по времени занятия (study_time)
+        subject_details[subject] = dict(sorted_details)
+        subject_max_columns[subject] = len(details)
 
     viewing_other_group = current_user.id != user_id
 
