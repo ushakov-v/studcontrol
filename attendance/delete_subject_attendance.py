@@ -2,10 +2,15 @@ from flask import redirect, url_for, request, render_template
 from flask_login import login_required, current_user
 from models import Attendance, db, Subject, User, Request
 from datetime import datetime
+from urllib.parse import unquote
 
 
 @login_required
 def delete_subject_attendance_route(subject_id, date):
+    # Раскодируем строку даты
+    date = unquote(date)
+    print(f"Получено значение date после декодирования: {date}")  # для отладки
+
     # Get the user_id from the request or default to the current user's id
     user_id = request.args.get('user_id', type=int, default=current_user.id)
     user = User.query.get(user_id)
@@ -33,10 +38,10 @@ def delete_subject_attendance_route(subject_id, date):
             return render_template('error.html', message='У вас нет доступа к этой группе.')
 
     # Split the date string into date, study time, and activity
-    # Add a check to ensure the date is in the expected format
     date_parts = date.split(' - ')
     if len(date_parts) != 3:
-        return render_template('error.html', message='Неправильный формат даты. Ожидается: YYYY-MM-DD - время - активность')
+        return render_template('error.html',
+                               message='Неправильный формат даты. Ожидается: YYYY-MM-DD - время - активность')
 
     selected_date_str, study_time, activity = date_parts
 
