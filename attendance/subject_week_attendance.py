@@ -1,9 +1,3 @@
-from flask import render_template, request, session
-from flask_login import login_required, current_user
-from datetime import datetime, timedelta
-from models import Student, Attendance, Subject, StudentSemester, User, db, Request
-from get_current_semester import get_current_semester
-
 from flask import render_template, request, redirect, url_for
 from flask_login import login_required, current_user
 from models import Student, Attendance, Subject, StudentSemester, User, db, Request
@@ -12,6 +6,7 @@ from datetime import datetime, timedelta
 
 @login_required
 def subject_week_attendance_route():
+    selected_date_str = ''  # Инициализация переменной
     selected_semester = request.args.get('semester', type=int, default=1)
     user_id = request.args.get('user_id', type=int, default=current_user.id)
     date_str = request.args.get('date')
@@ -165,3 +160,4 @@ def subject_week_attendance_route():
                            viewing_other_group=viewing_other_group,
                            selected_date_str=selected_date_str,
                            subject_name_to_id=subject_name_to_id)
+
