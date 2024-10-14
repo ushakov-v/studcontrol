@@ -42,6 +42,9 @@
             width: 150px;
             text-align: center;
         }
+        a {
+            padding: 0;
+        }
     </style>
     <script>
         function updateDays() {
@@ -127,41 +130,43 @@
                     {% for subject in displayed_subjects %}
                     {% for key, subgroups in subject_details[subject].items() %}
                     <th class="attendance-column">
-                        {% if key[1] == 'lecture' %}
-                        Л
-                        {% elif key[1] == 'practice' %}
-                        ПЗ
-                        {% elif key[1] == 'laboratory' %}
-                        ЛЗ
-                        {% else %}
-                        Неизвестный тип занятия
-                        {% endif %}
-                        {% if subgroups|length > 1 or 'whole_group' in subgroups %}
-                        (Вся группа)
-                        {% elif 'subgroup1' in subgroups %}
-                        (Подгр. 1)
-                        {% elif 'subgroup2' in subgroups %}
-                        (Подгр. 2)
-                        {% endif %} <br>
-                        {% if key[2] == '1' %}
-                        (8:30 - 10:00)
-                        {% elif key[2] == '2' %}
-                        (10:10 - 11:40)
-                        {% elif key[2] == '3' %}
-                        (11:50 - 13:20)
-                        {% elif key[2] == '4' %}
-                        (14:00 - 15:30)
-                        {% elif key[2] == '5' %}
-                        (15:40 - 17:10)
-                        {% elif key[2] == '6' %}
-                        (17:20 - 18:50)
-                        {% elif key[2] == '7' %}
-                        (19:00 - 20:30)
-                        {% elif key[2] == '8' %}
-                        (20:40 - 22:10)
-                        {% else %}
-                        (Неизвестное время проведения занятия)
-                        {% endif %}
+                        <a href="{{ url_for('view_subject_attendance', subject_id=subject_name_to_id[subject], user_id=user_id, week=selected_week, date=selected_date_str ~ ' - ' ~ key[2] ~ ' - ' ~ key[1]) }}">
+                            {% if key[1] == 'lecture' %}
+                            Л
+                            {% elif key[1] == 'practice' %}
+                            ПЗ
+                            {% elif key[1] == 'laboratory' %}
+                            ЛЗ
+                            {% else %}
+                            Неизвестный тип занятия
+                            {% endif %}
+                            {% if subgroups|length > 1 or 'whole_group' in subgroups %}
+                            (Вся группа)
+                            {% elif 'subgroup1' in subgroups %}
+                            (Подгр. 1)
+                            {% elif 'subgroup2' in subgroups %}
+                            (Подгр. 2)
+                            {% endif %}<br>
+                            {% if key[2] == '1' %}
+                            (8:30 - 10:00)
+                            {% elif key[2] == '2' %}
+                            (10:10 - 11:40)
+                            {% elif key[2] == '3' %}
+                            (11:50 - 13:20)
+                            {% elif key[2] == '4' %}
+                            (14:00 - 15:30)
+                            {% elif key[2] == '5' %}
+                            (15:40 - 17:10)
+                            {% elif key[2] == '6' %}
+                            (17:20 - 18:50)
+                            {% elif key[2] == '7' %}
+                            (19:00 - 20:30)
+                            {% elif key[2] == '8' %}
+                            (20:40 - 22:10)
+                            {% else %}
+                            (Неизвестное время проведения занятия)
+                            {% endif %}
+                        </a>
                     </th>
                     {% endfor %}
                     {% endfor %}

@@ -14,14 +14,12 @@ def edit_subject_attendance_route(subject_id, date):
     if current_user.role == 'chief':
         request_entry = Request.query.filter_by(student_id=current_user.id, status='approved').first()
         if not request_entry:
-            return render_template('error.html',
-                                   message='Ваш запрос на просмотр журналов не был одобрен администратором.')
+            return render_template('error.html', message='Ваш запрос на просмотр журналов не был одобрен администратором.')
 
     if current_user.role == 'captain':
         request_entry = Request.query.filter_by(student_id=current_user.id, status='approved').first()
         if not request_entry:
-            return render_template('error.html',
-                                   message='Ваш запрос на редактирование журнала посещаемости не был одобрен.')
+            return render_template('error.html', message='Ваш запрос на редактирование журнала посещаемости не был одобрен.')
 
         if user_id != current_user.id:
             return render_template('error.html', message='У вас нет доступа к этой группе.')
@@ -117,10 +115,32 @@ def edit_subject_attendance_route(subject_id, date):
         return redirect(url_for('view_subject_attendance', subject_id=subject.id, week=selected_week, date=f"{new_date} - {new_study_time} - {new_activity}", user_id=user_id))
 
     # Проверка статуса дистанционного обучения для студентов
-    students_with_remote_learning = {rl.student_id for rl in RemoteLearningDate.query.filter(RemoteLearningDate.student_id.in_([s.id for s in students]), RemoteLearningDate.start_date <= date_obj, RemoteLearningDate.end_date >= date_obj).all()}
+    students_with_remote_learning = {
+        rl.student_id for rl in RemoteLearningDate.query.filter(
+            RemoteLearningDate.student_id.in_([s.id for s in students]),
+            RemoteLearningDate.start_date <= date_obj,
+            RemoteLearningDate.end_date >= date_obj
+        ).all()
+    }
 
-    students_with_attendance = [student for student in students if student.id in attendance_data or student.id in students_with_remote_learning]
+    # Фильтруем студентов для отображения только тех, кто имеет отметку о посещаемости на текущую дату
+    students_with_attendance = [
+        student for student in students
+        if student.id in attendance_data
+    ]
 
     viewing_other_group = current_user.id != user_id
 
-    return render_template('attendance/edit_subject_attendance.html', subject=subject, students=students_with_attendance, date=date_obj, study_time=study_time, activity=activity, topic=attendances[0].topic if attendances else '', attendance_data=attendance_data, user_id=user_id, students_with_remote_learning=students_with_remote_learning, viewing_other_group=viewing_other_group)
+    return render_template(
+        'attendance/edit_subject_attendance.html',
+        subject=subject,
+        students=students_with_attendance,
+        date=date_obj,
+        study_time=study_time,
+        activity=activity,
+        topic=attendances[0].topic if attendances else '',
+        attendance_data=attendance_data,
+        user_id=user_id,
+        students_with_remote_learning=students_with_remote_learning,
+        viewing_other_group=viewing_other_group
+    )

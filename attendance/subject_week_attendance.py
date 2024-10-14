@@ -4,6 +4,12 @@ from datetime import datetime, timedelta
 from models import Student, Attendance, Subject, StudentSemester, User, db, Request
 from get_current_semester import get_current_semester
 
+from flask import render_template, request, redirect, url_for
+from flask_login import login_required, current_user
+from models import Student, Attendance, Subject, StudentSemester, User, db, Request
+from get_current_semester import get_current_semester
+from datetime import datetime, timedelta
+
 @login_required
 def subject_week_attendance_route():
     selected_semester = request.args.get('semester', type=int, default=1)
@@ -75,6 +81,7 @@ def subject_week_attendance_route():
     if selected_week and selected_day:
         week_start_date = start_date + timedelta(weeks=(weeks.index(selected_week)))
         selected_date = week_start_date + timedelta(days=(selected_day - 1))
+        selected_date_str = selected_date.strftime('%Y-%m-%d')
 
         for student in students:
             if not student.expel_date or student.expel_date > selected_date:
@@ -85,16 +92,18 @@ def subject_week_attendance_route():
                 }
 
                 for record in records:
-                    # Извлечение названия предмета с использованием subject_id
                     subject = Subject.query.get(record.subject_id)
                     subject_name = subject.abbreviated_name if subject and subject.abbreviated_name else 'Неизвестный предмет'
                     status = record.status
                     student_attendance['attendance_records'].append({
                         'subject': subject_name,
+                        'subject_id': subject.id if subject else None,
                         'activity': record.activity,
                         'study_time': record.study_time,
                         'subgroup': record.subgroup,
-                        'status': status
+                        'status': status,
+                        'date': selected_date_str,
+                        'week': selected_week
                     })
 
                 attendance_data.append(student_attendance)
@@ -133,12 +142,26 @@ def subject_week_attendance_route():
         subject_details[subject] = dict(sorted_details)
         subject_max_columns[subject] = len(details)
 
+    # Создание словаря для сопоставления названий предметов с их ID
+    subject_name_to_id = {subject.abbreviated_name: subject.id for subject in subjects}
+
     viewing_other_group = current_user.id != user_id
 
-    return render_template('attendance/subject_week_attendance.html', students=students, subjects=subjects,
-                           attendance_data=attendance_data, selected_week=selected_week, selected_day=selected_day,
-                           week_ranges=week_ranges, displayed_subjects=displayed_subjects,
-                           week_dates=week_dates, selected_semester=selected_semester, total_semesters=total_semesters,
-                           subject_max_columns=subject_max_columns, subject_details=subject_details,
-                           user_id=user_id, viewing_attendance_user=user,
-                           viewing_other_group=viewing_other_group)
+    return render_template('attendance/subject_week_attendance.html',
+                           students=students,
+                           subjects=subjects,
+                           attendance_data=attendance_data,
+                           selected_week=selected_week,
+                           selected_day=selected_day,
+                           week_ranges=week_ranges,
+                           displayed_subjects=displayed_subjects,
+                           week_dates=week_dates,
+                           selected_semester=selected_semester,
+                           total_semesters=total_semesters,
+                           subject_max_columns=subject_max_columns,
+                           subject_details=subject_details,
+                           user_id=user_id,
+                           viewing_attendance_user=user,
+                           viewing_other_group=viewing_other_group,
+                           selected_date_str=selected_date_str,
+                           subject_name_to_id=subject_name_to_id)
