@@ -6,6 +6,7 @@ from flask_bcrypt import Bcrypt
 from flask_login import LoginManager, current_user
 from flask_migrate import Migrate
 from models import db, User, create_admin_user, TempUser, Message
+from yandex_verification import yandex_verification
 from authorization.registration.register_chief import register_chief_route
 from authorization.registration.register_captain import register_captain_route
 from authorization.registration.register_student import register_student_route
@@ -134,6 +135,7 @@ def apply_security_headers(response):
     return response
 
 # Маршруты
+app.add_url_rule('/yandex_640bce5c8a1b4466.html', 'yandex_verification', yandex_verification)
 app.add_url_rule('/register_chief', 'register_chief', register_chief_route, methods=['GET', 'POST'])
 app.add_url_rule('/register_captain', 'register_captain', register_captain_route, methods=['GET', 'POST'])
 app.add_url_rule('/register_student', 'register_student', register_student_route, methods=['GET', 'POST'])
