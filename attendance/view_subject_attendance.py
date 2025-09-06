@@ -1,6 +1,6 @@
 from flask import render_template, request, session, redirect, url_for
 from flask_login import login_required, current_user
-from models import Attendance, Student, Subject, Teacher, User, db, RemoteLearningDate, Request
+from models import Attendance, Student, Subject, Teacher, User, db, RemoteLearningDate, Request, StudentSemester
 from datetime import datetime, timedelta
 from get_current_semester import get_current_semester
 
@@ -75,7 +75,7 @@ def view_subject_attendance_route(subject_id):
         Attendance.study_time,
         Attendance.topic
     ).filter_by(
-        subject_id=subject_id,  # Используем subject_id вместо имени
+        subject_id=subject_id,
         user_id=user_id
     ).distinct().all()
 
@@ -108,6 +108,11 @@ def view_subject_attendance_route(subject_id):
 
         student_ids = [attendance.student_id for attendance in attendances]
         students = Student.query.filter(Student.id.in_(student_ids)).order_by(Student.name).all()
+
+        # Добавляем информацию о подгруппах на основе семестра предмета
+        for student in students:
+            student_semester = StudentSemester.query.filter_by(student_id=student.id, semester=subject.semester).first()
+            student.current_subgroup = student_semester.subgroup if student_semester else 'whole_group'
 
         selected_topic = attendances[0].topic if attendances else None
     else:

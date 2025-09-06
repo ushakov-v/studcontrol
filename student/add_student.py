@@ -50,7 +50,7 @@ def add_student_route():
         email = request.form.get('email', '').strip().lower()
         phone = request.form.get('phone', '').strip()
         subgroup = request.form['subgroup']
-        semester = request.form['semester']  # Получаем выбранный семестр из формы
+        semester = int(request.form['semester'])  # Получаем выбранный семестр из формы
 
         # Валидация email
         if email and not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
@@ -98,17 +98,17 @@ def add_student_route():
             name=name,
             email=email,
             phone=phone,
-            subgroup=subgroup,
             user_id=user_id  # Позволяет одному пользователю иметь несколько студентов
         )
         db.session.add(new_student)
         db.session.commit()
 
-        # Создание записи о семестре для студента
+        # Создание записи о семестре для студента с указанием подгруппы
         student_semester = StudentSemester(
             student_id=new_student.id,
             semester=semester,  # Используем выбранный семестр
-            user_id=user_id
+            user_id=user_id,
+            subgroup=subgroup  # Сохраняем подгруппу для конкретного семестра
         )
         db.session.add(student_semester)
         db.session.commit()

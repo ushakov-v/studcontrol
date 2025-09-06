@@ -146,9 +146,9 @@
                     </span>
                 </span>
                 <br>
-                <input type="radio" id="whole_group" name="subgroup" value="whole_group" checked>
+                <input type="radio" id="whole_group" name="subgroup" value="whole_group" {% if form_data and form_data['subgroup'] == 'whole_group' %}checked{% endif %}>
                 <label for="whole_group">Вся группа</label><br>
-                <input type="radio" id="subgroup1" name="subgroup" value="subgroup1">
+                <input type="radio" id="subgroup1" name="subgroup" value="subgroup1" {% if form_data and form_data['subgroup'] == 'subgroup1' %}checked{% endif %}>
                 <label for="subgroup1">Подгруппа 1</label><br>
                 <input type="radio" id="subgroup2" name="subgroup" value="subgroup2" {% if form_data and form_data['subgroup'] == 'subgroup2' %}checked{% endif %}>
                 <label for="subgroup2">Подгруппа 2</label>

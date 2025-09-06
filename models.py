@@ -13,7 +13,6 @@ class Student(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100))
     phone = db.Column(db.String(20))
-    subgroup = db.Column(db.String(20), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False)
     expelled = db.Column(db.Boolean, default=False)
     expel_date = db.Column(db.Date, nullable=True)
@@ -32,6 +31,7 @@ class RemoteLearningDate(db.Model):
 class StudentSemester(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('student.id', ondelete='CASCADE'), nullable=False, name='fk_student_semester_student_id')
+    subgroup = db.Column(db.String(20), nullable=False)
     semester = db.Column(db.Integer, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, name='fk_student_semester_user_id')
 
@@ -57,7 +57,7 @@ class Teacher(db.Model):
 
 class Subject(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(300), nullable=False)
     abbreviated_name = db.Column(db.String(100))
     semester = db.Column(db.Integer, nullable=False)
     control = db.Column(db.String(30), nullable=False)

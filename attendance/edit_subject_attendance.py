@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import render_template, request, redirect, url_for
 from flask_login import login_required, current_user
-from models import Attendance, Student, Subject, RemoteLearningDate, db, User, Request
+from models import Attendance, Student, Subject, RemoteLearningDate, db, User, Request, StudentSemester
 
 @login_required
 def edit_subject_attendance_route(subject_id, date):
@@ -32,6 +32,8 @@ def edit_subject_attendance_route(subject_id, date):
     if not subject:
         return render_template('error.html', message='Предмет не найден')
 
+    selected_semester = subject.semester  # Используем семестр, привязанный к предмету
+
     # Получение списка студентов
     students = Student.query.filter_by(user_id=user_id).order_by(Student.name).all()
 
@@ -60,6 +62,9 @@ def edit_subject_attendance_route(subject_id, date):
         for student in students:
             status = request.form.get(f'status_{student.id}')
             if status:
+                # Получаем подгруппу для семестра предмета
+                student_semester = StudentSemester.query.filter_by(student_id=student.id, semester=selected_semester).first()
+                current_subgroup = student_semester.subgroup if student_semester else 'whole_group'
                 if student.id in attendance_data:
                     old_attendance = attendance_data[student.id]
                     new_attendance = Attendance(
@@ -70,7 +75,7 @@ def edit_subject_attendance_route(subject_id, date):
                         activity=new_activity,
                         status=status,
                         topic=new_topic,
-                        subgroup=old_attendance.subgroup,
+                        subgroup=current_subgroup,
                         week=old_attendance.week,
                         user_id=old_attendance.user_id
                     )
@@ -83,8 +88,8 @@ def edit_subject_attendance_route(subject_id, date):
                         activity=new_activity,
                         status=status,
                         topic=new_topic,
-                        subgroup="subgroup",
-                        week=1,  # Используйте правильное значение недели
+                        subgroup=current_subgroup,
+                        week=selected_week or 1,
                         user_id=user_id
                     )
                 db.session.add(new_attendance)
@@ -126,8 +131,13 @@ def edit_subject_attendance_route(subject_id, date):
     # Фильтруем студентов для отображения только тех, кто имеет отметку о посещаемости на текущую дату
     students_with_attendance = [
         student for student in students
-        if student.id in attendance_data
+        if student.id in attendance_data or student.id in students_with_remote_learning
     ]
+
+    # Добавляем информацию о подгруппах к каждому студенту
+    for student in students_with_attendance:
+        student_semester = StudentSemester.query.filter_by(student_id=student.id, semester=selected_semester).first()
+        student.current_subgroup = student_semester.subgroup if student_semester else 'whole_group'
 
     viewing_other_group = current_user.id != user_id
 
@@ -142,5 +152,6 @@ def edit_subject_attendance_route(subject_id, date):
         attendance_data=attendance_data,
         user_id=user_id,
         students_with_remote_learning=students_with_remote_learning,
-        viewing_other_group=viewing_other_group
+        viewing_other_group=viewing_other_group,
+        selected_semester=selected_semester
     )

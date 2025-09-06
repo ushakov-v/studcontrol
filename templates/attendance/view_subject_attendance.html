@@ -253,11 +253,11 @@
                 <tr data-student-id="{{ student.id }}">
                     <td>{{ student.name }}</td>
                     <td>
-                        {% if student.subgroup == 'whole_group' %}
+                        {% if student.current_subgroup == 'whole_group' %}
                         Вся группа
-                        {% elif student.subgroup == 'subgroup1' %}
+                        {% elif student.current_subgroup == 'subgroup1' %}
                         Подгруппа 1
-                        {% elif student.subgroup == 'subgroup2' %}
+                        {% elif student.current_subgroup == 'subgroup2' %}
                         Подгруппа 2
                         {% else %}
                         Неизвестная подгруппа

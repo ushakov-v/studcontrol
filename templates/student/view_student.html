@@ -84,11 +84,11 @@
                 <p class="card-text"><strong>Email:</strong> {{ student.email }}</p>
                 <p class="card-text"><strong>Телефон:</strong> {{ student.phone }}</p>
                 <p class="card-text"><strong>Подгруппа:</strong>
-                    {% if student.subgroup == 'whole_group' %}
+                    {% if current_subgroup == 'whole_group' %}
                     Вся группа
-                    {% elif student.subgroup == 'subgroup1' %}
+                    {% elif current_subgroup == 'subgroup1' %}
                     Подгруппа 1
-                    {% elif student.subgroup == 'subgroup2' %}
+                    {% elif current_subgroup == 'subgroup2' %}
                     Подгруппа 2
                     {% else %}
                     Неизвестная подгруппа

@@ -69,12 +69,15 @@
             <label for="semester">Выберите семестр</label>
             <select id="semester" name="semester" class="form-control" onchange="updateSubjects()">
                 {% for semester in semesters %}
-                <option value="{{ semester }}" {% if semester == selected_semester %}selected{% endif %}>Семестр {{ semester }}</option>
+                <option value="{{ semester }}" {% if semester== selected_semester %}selected{% endif %}>Семестр {{
+                    semester }}
+                </option>
                 {% endfor %}
             </select>
         </div>
         {% if current_user.id == user_id or current_user.role == 'admin' %}
-        <a href="{{ url_for('add_subject', semester=selected_semester, user_id=user_id) }}" class="btn btn-success mb-3 mt-5">Добавить новый предмет</a>
+        <a href="{{ url_for('add_subject', semester=selected_semester, user_id=user_id) }}"
+           class="btn btn-success mb-3 mt-5">Добавить новый предмет</a>
         {% else %}
         <div class="btn btn-success mb-3 invisible">Добавить новый предмет</div>
         {% endif %}
@@ -115,11 +118,17 @@
                 </td>
                 <td>{{ subject.hours }}</td>
                 <td class="action-buttons">
-                    <a href="{{ url_for('view_subject_attendance', subject_id=subject.id, user_id=user_id) }}" class="btn btn-primary mb-2">Подробнее</a>
+                    <a href="{{ url_for('view_subject_attendance', subject_id=subject.id, user_id=user_id) }}"
+                       class="btn btn-primary mb-2">Подробнее</a>
                     {% if current_user.id == user_id or current_user.role == 'admin' %}
-                    <a href="{{ url_for('edit_subject', subject_id=subject.id, user_id=user_id) }}" class="btn btn-info mb-2">Редактировать</a>
-                    <a href="{{ url_for('delete_subject', subject_id=subject.id, semester=selected_semester, user_id=user_id) }}" class="btn btn-danger mb-2" onclick="confirmDeletion(event)">Удалить</a>
+                    <a href="{{ url_for('edit_subject', subject_id=subject.id, user_id=user_id) }}"
+                       class="btn btn-info mb-2">Редактировать</a>
+                    <a href="{{ url_for('delete_subject', subject_id=subject.id, semester=selected_semester, user_id=user_id) }}"
+                       class="btn btn-danger mb-2" onclick="confirmDeletion(event)">Удалить</a>
+                    <a href="{{ url_for('export_subject_attendance', subject_id=subject.id, semester=selected_semester, user_id=user_id) }}"
+                       class="btn btn-success mb-2">Экспорт в Excel</a>
                     {% else %}
+                    <div class="empty"></div>
                     <div class="empty"></div>
                     <div class="empty"></div>
                     {% endif %}
@@ -135,7 +144,8 @@
         {% endif %}
     </div>
     {% if viewing_other_group and current_user.role != 'student' and current_user.role != 'captain' %}
-    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору группы</a>
+    <a href="{{ url_for('group_overview', user_id=user_id) }}" class="btn btn-secondary fixed-button">Назад к обзору
+        группы</a>
     {% endif %}
 </div>
 {% include 'footer.html' %}

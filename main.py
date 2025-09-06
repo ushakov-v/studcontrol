@@ -27,6 +27,7 @@ from subject.subject_list import subject_list_route
 from subject.add_subject import add_subject_route
 from subject.edit_subject import edit_subject_route
 from subject.delete_subject import delete_subject_route
+from subject.export_subject_attendance import export_subject_attendance_route
 from attendance.attendance import manage_attendance_route
 from attendance.view_subject_attendance import view_subject_attendance_route
 from attendance.edit_subject_attendance import edit_subject_attendance_route
@@ -184,6 +185,7 @@ app.add_url_rule('/manage_requests', 'manage_requests', manage_requests_route, m
 app.add_url_rule('/approve_request/<int:request_id>', 'approve_request', approve_request_route, methods=['GET', 'POST'])
 app.add_url_rule('/reject_request/<int:request_id>', 'reject_request', reject_request_route, methods=['GET', 'POST'])
 app.add_url_rule('/transfer_captain_rights/<int:student_id>', 'transfer_captain_rights', transfer_captain_rights_route, methods=['GET', 'POST'])
+app.add_url_rule('/export_subject_attendance', 'export_subject_attendance', export_subject_attendance_route)
 
 if __name__ == '__main__':
     app.run(debug=True)

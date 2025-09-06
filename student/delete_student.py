@@ -2,6 +2,7 @@ from flask import redirect, url_for, request, render_template
 from flask_login import current_user, login_required
 from models import db, Student, StudentSemester, Attendance, User
 
+
 @login_required
 def delete_student_route(student_id):
     selected_semester = request.args.get('semester', type=int, default=1)
@@ -15,14 +16,18 @@ def delete_student_route(student_id):
         return render_template('error.html', message='У вас нет прав на удаление этого студента.')
 
     if student:
-        # Удаление записей посещаемости студента
-        Attendance.query.filter_by(student_id=student.id).delete()
+        try:
+            # Удаление всех записей посещаемости студента
+            Attendance.query.filter_by(student_id=student.id).delete()
 
-        # Удаление записей студента в таблице StudentSemester
-        StudentSemester.query.filter_by(student_id=student.id, user_id=owner.id).delete()
+            # Удаление всех записей студента в таблице StudentSemester
+            StudentSemester.query.filter_by(student_id=student.id).delete()
 
-        # Удаление самого студента
-        db.session.delete(student)
-        db.session.commit()
+            # Удаление самого студента
+            db.session.delete(student)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return render_template('error.html', message=f'Произошла ошибка при удалении студента: {str(e)}')
 
     return redirect(url_for('student_list', semester=selected_semester, user_id=owner.id))

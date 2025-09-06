@@ -67,18 +67,19 @@
                     <label for="instituteFilter">Институт:</label>
                     <select class="form-control" id="instituteFilter" name="institute" onchange="submitForm()">
                         <option value="">Все институты</option>
-                        <option value="institute_1">Институт информационных технологий</option>
-                        <option value="institute_2">Институт ядерной энергии и промышленности</option>
-                        <option value="institute_3">Юридический институт</option>
-                        <option value="institute_4">Морской институт</option>
-                        <option value="institute_5">Институт радиоэлектроники и интеллектуальных технических систем</option>
-                        <option value="institute_6">Институт финансов, экономики и управления</option>
-                        <option value="institute_7">Политехнический институт</option>
-                        <option value="institute_8">Институт общественных наук и международных отношений</option>
-                        <option value="institute_9">Гуманитарно-педагогический институт</option>
-                        <option value="institute_10">Институт фундаментальной медицины и здоровьесбережения</option>
-                        <option value="institute_11">Институт развития города</option>
-                        <option value="institute_12">Институт перспективных исследований</option>
+                        <option value="institute_1">ВТШ «СПИ». Факультет информационных технологий</option>
+                        <option value="institute_2">ВТШ «СПИ». Инженерный факультет</option>
+                        <option value="institute_3">Институт ядерной энергии и промышленности</option>
+                        <option value="institute_4">Юридический институт</option>
+                        <option value="institute_5">Морской институт</option>
+                        <option value="institute_6">Институт радиоэлектроники и интеллектуальных технических систем</option>
+                        <option value="institute_7">Институт финансов, экономики и управления</option>
+                        <option value="institute_8">Политехнический институт</option>
+                        <option value="institute_9">Институт общественных наук и международных отношений</option>
+                        <option value="institute_10">Гуманитарно-педагогический институт</option>
+                        <option value="institute_11">Институт фундаментальной медицины и здоровьесбережения</option>
+                        <option value="institute_12">Институт развития города</option>
+                        <option value="institute_13">Институт перспективных исследований</option>
                     </select>
                 </div>
                 <div class="form-group col-md-4 mb-4">
@@ -135,28 +136,30 @@
                 </td>
                 <td>
                     {% if user.institute == "institute_1" %}
-                    Институт информационных технологий
+                    ВТШ «СПИ». Факультет информационных технологий
                     {% elif user.institute == "institute_2" %}
-                    Институт ядерной энергии и промышленности
+                    ВТШ «СПИ». Инженерный факультет
                     {% elif user.institute == "institute_3" %}
-                    Юридический институт
+                    Институт ядерной энергии и промышленности
                     {% elif user.institute == "institute_4" %}
-                    Морской институт
+                    Юридический институт
                     {% elif user.institute == "institute_5" %}
-                    Институт радиоэлектроники и интеллектуальных технических систем
+                    Морской институт
                     {% elif user.institute == "institute_6" %}
-                    Институт финансов, экономики и управления
+                    Институт радиоэлектроники и интеллектуальных технических систем
                     {% elif user.institute == "institute_7" %}
-                    Политехнический институт
+                    Институт финансов, экономики и управления
                     {% elif user.institute == "institute_8" %}
-                    Институт общественных наук и международных отношений
+                    Политехнический институт
                     {% elif user.institute == "institute_9" %}
-                    Гуманитарно-педагогический институт
+                    Институт общественных наук и международных отношений
                     {% elif user.institute == "institute_10" %}
-                    Институт фундаментальной медицины и здоровьесбережения
+                    Гуманитарно-педагогический институт
                     {% elif user.institute == "institute_11" %}
-                    Институт развития города
+                    Институт фундаментальной медицины и здоровьесбережения
                     {% elif user.institute == "institute_12" %}
+                    Институт развития города
+                    {% elif user.institute == "institute_13" %}
                     Институт перспективных исследований
                     {% else %}
                     Неизвестный институт

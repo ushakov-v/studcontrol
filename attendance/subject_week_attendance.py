@@ -88,20 +88,24 @@ def subject_week_attendance_route():
 
                 for record in records:
                     subject = Subject.query.get(record.subject_id)
-                    subject_name = subject.abbreviated_name if subject and subject.abbreviated_name else 'Неизвестный предмет'
-                    status = record.status
-                    student_attendance['attendance_records'].append({
-                        'subject': subject_name,
-                        'subject_id': subject.id if subject else None,
-                        'activity': record.activity,
-                        'study_time': record.study_time,
-                        'subgroup': record.subgroup,
-                        'status': status,
-                        'date': selected_date_str,
-                        'week': selected_week
-                    })
+                    if subject and subject.semester == selected_semester:  # Проверяем совпадение семестра
+                        student_semester = StudentSemester.query.filter_by(student_id=student.id, semester=selected_semester).first()
+                        current_subgroup = student_semester.subgroup if student_semester else 'whole_group'
+                        subject_name = subject.abbreviated_name if subject and subject.abbreviated_name else 'Неизвестный предмет'
+                        status = record.status
+                        student_attendance['attendance_records'].append({
+                            'subject': subject_name,
+                            'subject_id': subject.id if subject else None,
+                            'activity': record.activity,
+                            'study_time': record.study_time,
+                            'subgroup': current_subgroup,  # Обновляем подгруппу с учетом семестра предмета
+                            'status': status,
+                            'date': selected_date_str,
+                            'week': selected_week
+                        })
 
-                attendance_data.append(student_attendance)
+                if student_attendance['attendance_records']:  # Добавляем только если есть записи
+                    attendance_data.append(student_attendance)
 
     displayed_subjects = set()
     subject_max_columns = {}
@@ -160,4 +164,3 @@ def subject_week_attendance_route():
                            viewing_other_group=viewing_other_group,
                            selected_date_str=selected_date_str,
                            subject_name_to_id=subject_name_to_id)
-

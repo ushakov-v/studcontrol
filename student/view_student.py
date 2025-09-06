@@ -1,6 +1,6 @@
 from flask import render_template, request, session
 from flask_login import login_required, current_user
-from models import Student, Attendance, User, RemoteLearningDate, db, Request
+from models import Student, Attendance, User, RemoteLearningDate, db, Request, StudentSemester
 
 
 @login_required
@@ -46,11 +46,16 @@ def view_student_route(student_id):
     viewing_other_group = current_user.id != user_id
 
     if student:
+        # Находим последний заполненный семестр и его подгруппу
+        last_semester = StudentSemester.query.filter_by(student_id=student_id).order_by(StudentSemester.semester.desc()).first()
+        current_subgroup = last_semester.subgroup if last_semester else 'whole_group'
+
         total_absences = Attendance.query.filter_by(student_id=student_id, status='Absent').count()
         unexcused_absences = Attendance.query.filter_by(student_id=student_id, status='Absent').filter(
             Attendance.status != 'Excused').count()
         return render_template('student/view_student.html', student=student, total_absences=total_absences,
                                unexcused_absences=unexcused_absences, user_id=user_id, viewing_attendance_user=user,
-                               remote_learning_dates=formatted_remote_learning_dates, viewing_other_group=viewing_other_group, selected_semester=selected_semester)
+                               remote_learning_dates=formatted_remote_learning_dates, viewing_other_group=viewing_other_group,
+                               selected_semester=selected_semester, current_subgroup=current_subgroup)
     else:
         return render_template('error.html', message='Студент не найден')

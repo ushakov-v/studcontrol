@@ -50,7 +50,7 @@ def edit_student_route(student_id):
         new_email = request.form.get('email', '').strip().lower()
         new_phone = request.form.get('phone', '').strip()
         new_subgroup = request.form['subgroup']
-        new_semester = request.form['semester']
+        new_semester = int(request.form['semester'])
 
         # Валидация email
         if new_email and not re.match(r'^[^@]+@[^@]+\.[^@]+$', new_email):
@@ -91,18 +91,22 @@ def edit_student_route(student_id):
         student.name = new_name
         student.email = new_email
         student.phone = new_phone
-        student.subgroup = new_subgroup
 
-        # Обновление семестра студента
+        # Обновление семестра и подгруппы
         student_semester = StudentSemester.query.filter_by(student_id=student_id, semester=new_semester).first()
         if not student_semester:
             student_semester = StudentSemester(student_id=student_id, semester=new_semester, user_id=owner.id)
             db.session.add(student_semester)
+        student_semester.subgroup = new_subgroup
 
         db.session.commit()
         return redirect(url_for('student_list', semester=selected_semester, user_id=owner.id))
 
+    # Получаем текущую подгруппу для выбранного семестра
+    current_semester = StudentSemester.query.filter_by(student_id=student_id, semester=selected_semester).first()
+    current_subgroup = current_semester.subgroup if current_semester else 'whole_group'
 
     return render_template('student/edit_student.html', student=student, selected_semester=selected_semester,
                            total_semesters=total_semesters, user_id=owner.id, viewing_attendance_user=user,
-                           message=message, message_type=message_type, form_data=form_data, viewing_other_group=viewing_other_group)
+                           message=message, message_type=message_type, form_data=form_data, viewing_other_group=viewing_other_group,
+                           current_subgroup=current_subgroup)

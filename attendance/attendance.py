@@ -65,15 +65,18 @@ def manage_attendance_route():
                 continue
             status = request.form.get(f'status_{student.id}', None)
             if status:
+                # Получаем подгруппу для выбранного семестра
+                student_semester = StudentSemester.query.filter_by(student_id=student.id, semester=selected_semester).first()
+                current_subgroup = student_semester.subgroup if student_semester else 'whole_group'
                 attendance = Attendance(
                     student_id=student.id,
                     date=date,
-                    subject_id=subject_id,  # Используем subject_id вместо subject.name
+                    subject_id=subject_id,
                     study_time=study_time,
                     topic=topic,
                     status=status,
                     activity=activity,
-                    subgroup=student.subgroup,
+                    subgroup=current_subgroup,
                     week=date.isocalendar()[1],
                     user_id=user_id
                 )
@@ -81,7 +84,7 @@ def manage_attendance_route():
         db.session.commit()
         success_message = 'Посещаемость успешно добавлена!'
 
-    # Получение списка студентов
+    # Получение списка студентов с учетом семестра и подгруппы
     query = db.session.query(Student).join(StudentSemester).filter(
         Student.user_id == user_id,
         StudentSemester.semester == selected_semester,
@@ -89,9 +92,14 @@ def manage_attendance_route():
     )
 
     if selected_subgroup != 'all':
-        query = query.filter(Student.subgroup == selected_subgroup)
+        query = query.filter(StudentSemester.subgroup == selected_subgroup)
 
     students = query.order_by(Student.name).all()
+
+    # Добавляем информацию о подгруппах к каждому студенту
+    for student in students:
+        student_semester = StudentSemester.query.filter_by(student_id=student.id, semester=selected_semester).first()
+        student.current_subgroup = student_semester.subgroup if student_semester else 'whole_group'
 
     try:
         start_date, end_date, total_semesters = get_current_semester(user, selected_semester)
