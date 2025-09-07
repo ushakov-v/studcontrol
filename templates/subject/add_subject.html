@@ -108,7 +108,7 @@
             </div>
             <div class="form-group">
                 <label for="hours">Количество часов</label>
-                <input type="text" id="hours" name="hours" class="form-control" value="{{ form_data['hours'] if form_data else '' }}" required>
+                <input type="text" id="hours" name="hours" class="form-control" value="{{ form_data['hours'] if form_data and form_data['hours'] else '' }}" placeholder="Оставьте пустым, если неизвестно количество часов">
             </div>
 
             <!-- Контейнер для полей преподавателей -->

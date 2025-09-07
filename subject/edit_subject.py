@@ -55,10 +55,12 @@ def edit_subject_route(subject_id):
         new_abbreviated_name = request.form['abbreviated_name']
         new_semester = request.form['semester']
         new_control = request.form['control']
-        new_hours = request.form['hours']
+        new_hours = request.form.get('hours', '').strip()
+        if not new_hours:
+            new_hours = 'Нет часов'
 
-        # Валидация часов
-        if not re.match(r'^\d+$', new_hours):
+        # Валидация часов (только если заполнено и не "Нет часов")
+        if new_hours != 'Нет часов' and not re.match(r'^\d+$', new_hours):
             error_message = 'Количество часов должно содержать только цифры.'
             return render_template('subject/edit_subject.html', subject=subject, error_message=error_message,
                                    total_semesters=total_semesters, viewing_attendance_user=user,

@@ -48,11 +48,13 @@ def add_subject_route():
         name = request.form['name']
         abbreviated_name = request.form['abbreviated_name']
         control = request.form['control']
-        hours = request.form['hours']
+        hours = request.form.get('hours', '').strip()
+        if not hours:
+            hours = 'Нет часов'
         semester = request.form['semester']
 
-        # Валидация часов
-        if not re.match(r'^\d+$', hours):
+        # Валидация часов (только если заполнено и не "Нет часов")
+        if hours != 'Нет часов' and not re.match(r'^\d+$', hours):
             message = 'Количество часов должно содержать только цифры.'
             return render_template('subject/add_subject.html', total_semesters=total_semesters, user_id=user.id,
                                    selected_semester=selected_semester, message=message, form_data=form_data,

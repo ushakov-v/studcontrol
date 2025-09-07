@@ -61,7 +61,7 @@ class Subject(db.Model):
     abbreviated_name = db.Column(db.String(100))
     semester = db.Column(db.Integer, nullable=False)
     control = db.Column(db.String(30), nullable=False)
-    hours = db.Column(db.Integer, nullable=False)
+    hours = db.Column(db.String(20), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id', ondelete='CASCADE'), nullable=False, name='fk_subject_user_id')
 
     teachers = db.relationship('Teacher', backref='subject', lazy=True, cascade="all, delete-orphan")

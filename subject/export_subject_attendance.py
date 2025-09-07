@@ -149,7 +149,7 @@ def export_subject_attendance_route():
             full_title = ''
         teacher_info = teacher.name + (f" ({full_title})" if full_title else '')
         teachers_info.append(teacher_info)
-    teacher_str = ', '.join(teachers_info) if teachers_info else user.full_name
+    teacher_str = ', '.join(teachers_info) if teachers_info else ''
 
     # Перевод формы контроля
     control_map = {
@@ -264,11 +264,17 @@ def export_subject_attendance_route():
         'right': 1
     })
 
-    # Формирование строки дисциплины с учетом отсутствия запятой при 'none'
-    if subject.control == 'none_control':
-        discipline_str = f"{subject.name} ({subject.hours} ч.)"
+    # Формирование строки дисциплины с учетом новых условий
+    if subject.hours == 'Нет часов':
+        if subject.control == 'none_control':
+            discipline_str = subject.name
+        else:
+            discipline_str = f"{subject.name} ({control_translation})"
     else:
-        discipline_str = f"{subject.name} ({subject.hours} ч., {control_translation})"
+        if subject.control == 'none_control':
+            discipline_str = f"{subject.name} ({subject.hours} ч.)"
+        else:
+            discipline_str = f"{subject.name} ({subject.hours} ч., {control_translation})"
     discipline_height = max(15, (len(discipline_str) // 50 + 1) * 15)
     teacher_height = max(15, (len(teacher_str) // 50 + 1) * 15)
 
@@ -335,7 +341,10 @@ def export_subject_attendance_route():
         topics_start_col = attendance_col_count + skip_columns
 
         # Информация о преподавателе
-        worksheet.merge_range(0, topics_start_col, 0, topics_start_col + 3, f'ПРЕПОДАВАТЕЛЬ: {teacher_str}', title_format)
+        if not teachers_info:
+            worksheet.merge_range(0, topics_start_col, 0, topics_start_col + 3, 'ПРЕПОДАВАТЕЛЬ: ', title_format)
+        else:
+            worksheet.merge_range(0, topics_start_col, 0, topics_start_col + 3, f'ПРЕПОДАВАТЕЛЬ: {teacher_str}', title_format)
         worksheet.set_row(0, max(discipline_height, teacher_height))  # Установка максимальной высоты для строки 0
 
         # Таблица тем занятий
