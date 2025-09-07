@@ -3,6 +3,7 @@ from flask import render_template, request
 from flask_login import login_required, current_user
 from models import Student, Attendance, StudentSemester, db, User, Request
 from get_current_semester import get_current_semester
+from collections import defaultdict
 
 @login_required
 def week_attendance_table_route():
@@ -44,34 +45,61 @@ def week_attendance_table_route():
     except ValueError as e:
         return render_template('error.html', message=str(e))
 
+    # Получаем всех студентов одним запросом
     students = db.session.query(Student).join(StudentSemester).filter(
         Student.user_id == user_id,
         StudentSemester.semester == selected_semester
     ).order_by(Student.name).all()
 
+    if not students:
+        # Если нет студентов, сразу рендерим пустую таблицу
+        return render_template('attendance/week_attendance_table.html',
+                               students=[],
+                               num_weeks=0,
+                               start_date=start_date,
+                               attendance_data={},
+                               selected_semester=selected_semester,
+                               total_semesters=total_semesters,
+                               user_id=user_id,
+                               viewing_attendance_user=user,
+                               viewing_other_group=viewing_other_group)
+
+    # Получаем ID студентов для фильтра
+    student_ids = [student.id for student in students]
+
+    # Вычисляем количество недель
     num_weeks = (end_date - start_date).days // 7 + 1
 
+    # Один большой запрос: все релевантные Attendance за семестр для всех студентов
+    all_absences = Attendance.query.filter(
+        Attendance.student_id.in_(student_ids),
+        Attendance.date.between(start_date, end_date),
+        Attendance.status.in_(['Absent', 'Excused', 'Remote'])
+    ).all()
+
+    # Группируем данные в памяти: defaultdict для student_id -> week -> list of absences
+    attendance_by_student_week = defaultdict(lambda: defaultdict(list))
+    for absence in all_absences:
+        # Вычисляем неделю для даты
+        week_offset = (absence.date - start_date).days // 7
+        week = week_offset + 1
+        attendance_by_student_week[absence.student_id][week].append(absence)
+
+    # Теперь обрабатываем данные для каждого студента
     attendance_data = {}
     for student in students:
         student_attendance = {}
         total_absences = 0
         total_unexcused_absences = 0
-        contains_do = False  # Флаг для проверки, есть ли хотя бы одно ДО
-        all_zeros = True  # Флаг для проверки, есть ли только нули
+        contains_do = False  # Флаг для хотя бы одного ДО
+        all_zeros = True  # Флаг для только нулей в не-ДО неделях
 
         for week_offset in range(num_weeks):
-            week_start_date = start_date + timedelta(weeks=week_offset)
             week = week_offset + 1
-
-            absences = Attendance.query.filter(
-                Attendance.student_id == student.id,
-                Attendance.date.between(week_start_date, week_start_date + timedelta(days=6)),
-                Attendance.status.in_(['Absent', 'Excused', 'Remote'])
-            ).all()
+            absences = attendance_by_student_week[student.id][week]  # Список absences для этой недели
 
             num_absences = len([a for a in absences if a.status in ['Absent', 'Excused']])
             num_unexcused_absences = len([a for a in absences if a.status == 'Absent'])
-
             remote_learning_present = any(a.status == 'Remote' for a in absences)
 
             if remote_learning_present:
@@ -79,14 +107,14 @@ def week_attendance_table_route():
                 unexcused_absences_text = 'ДО'
                 hours_absences_text = 'ДО'
                 hours_unexcused_absences_text = 'ДО'
-                contains_do = True  # Найдено хотя бы одно ДО
+                contains_do = True
             else:
                 total_absences_text = num_absences
                 unexcused_absences_text = num_unexcused_absences
                 hours_absences_text = num_absences * 2
                 hours_unexcused_absences_text = num_unexcused_absences * 2
                 if num_absences > 0:
-                    all_zeros = False  # Найдены значения, отличные от нуля
+                    all_zeros = False
 
             student_attendance[week] = {
                 'total_absences': total_absences_text,
@@ -95,20 +123,26 @@ def week_attendance_table_route():
                 'hours_unexcused_absences': hours_unexcused_absences_text
             }
 
-            # Увеличиваем общее количество пропусков
-            if total_absences_text != 'ДО':
+            # Увеличиваем totals только если не ДО
+            if not remote_learning_present:
                 total_absences += num_absences
                 total_unexcused_absences += num_unexcused_absences
 
-        # Если хотя бы одна неделя была ДО, а остальные нули, выводим ДО
+        # Если есть ДО и все остальное 0, то totals = ДО
         if contains_do and all_zeros:
             total_absences = 'ДО'
             total_unexcused_absences = 'ДО'
 
+        # Вычисляем hours totals заранее (для шаблона)
+        total_hours_absences = total_absences * 2 if total_absences != 'ДО' else 'ДО'
+        total_hours_unexcused = total_unexcused_absences * 2 if total_unexcused_absences != 'ДО' else 'ДО'
+
         attendance_data[student] = {
             'attendance': student_attendance,
             'total_absences': total_absences,
-            'total_unexcused_absences': total_unexcused_absences
+            'total_unexcused_absences': total_unexcused_absences,
+            'total_hours_absences': total_hours_absences,
+            'total_hours_unexcused': total_hours_unexcused
         }
 
     return render_template('attendance/week_attendance_table.html',

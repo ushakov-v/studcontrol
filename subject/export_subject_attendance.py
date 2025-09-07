@@ -94,21 +94,29 @@ def export_subject_attendance_route():
         Attendance.date.between(start_date, end_date)
     ).distinct().order_by(Attendance.date, Attendance.study_time).all()
 
-    # Дедупликация сессий для лекций
-    unique_sessions = {}
+    # Группировка сессий по (date, study_time, activity, topic) и сбор подгрупп
+    grouped_sessions = {}
     for date, study_time, activity, topic, subgroup in sessions_query:
-        key = (date, study_time)
-        if activity == 'lecture':
-            # Для лекций используем subgroup=None и сохраняем только одну запись
-            if key not in unique_sessions or unique_sessions[key][2] != 'lecture':
-                unique_sessions[key] = (date, study_time, activity, topic, None)
+        key = (date, study_time, activity, topic)
+        if key not in grouped_sessions:
+            grouped_sessions[key] = set()
+        grouped_sessions[key].add(subgroup)
+
+    # Создание уникальных сессий с учетом объединения подгрупп для ПЗ и ЛЗ
+    unique_sessions = []
+    for key, subgroups in grouped_sessions.items():
+        date, study_time, activity, topic = key
+        # Если лекция или подгруппы покрывают обе (subgroup1 и subgroup2), или есть None/whole_group
+        if activity == 'lecture' or len(subgroups) > 1 or None in subgroups or 'whole_group' in subgroups:
+            # Объединяем в одну сессию с subgroup=None
+            unique_sessions.append((date, study_time, activity, topic, None))
         else:
-            # Для других видов занятий включаем subgroup в ключ
-            subgroup_key = (date, study_time, subgroup)
-            unique_sessions[subgroup_key] = (date, study_time, activity, topic, subgroup)
+            # Для отдельных подгрупп добавляем как есть
+            for sg in subgroups:
+                unique_sessions.append((date, study_time, activity, topic, sg))
 
     # Сортировка уникальных сессий по дате и времени
-    attendance_sessions = sorted(unique_sessions.values(), key=lambda x: (x[0], x[1]))
+    attendance_sessions = sorted(unique_sessions, key=lambda x: (x[0], x[1]))
 
     # Загружаем все данные посещаемости и дистанционного обучения
     student_ids = [s.id for s in students]
@@ -356,8 +364,14 @@ def export_subject_attendance_route():
         for session in sessions_chunk:
             date, study_time, activity, topic, session_subgroup = session
             translated_activity = activity_map.get(activity, activity)
-            # Для лекций подгруппа не указывается
-            if session_subgroup and activity != 'lecture':
+            # Проверяем, проставлена ли посещаемость всей группе
+            all_subgroups_present = (session_subgroup is None or
+                                   all(s.current_subgroup in [session_subgroup, None, 'whole_group'] for s in students))
+            # Для ПЗ и ЛЗ убираем подгруппу, если посещаемость для обеих подгрупп
+            if session_subgroup and activity in ['laboratory', 'practice'] and all_subgroups_present:
+                translated_activity = activity_map.get(activity, activity)
+            # Для лекций или всей группы подгруппа не указывается
+            elif session_subgroup and not all_subgroups_present and activity != 'lecture':
                 sg_str = subgroup_map.get(session_subgroup, session_subgroup)
                 translated_activity = f"{translated_activity} ({sg_str})"
             lines = split_topic_by_words(topic, max_length=50)  # Разбиение темы по словам
