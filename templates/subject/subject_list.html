@@ -102,7 +102,9 @@
                 <td>{{ subject.abbreviated_name }}</td>
                 <td>{{ subject.semester }}</td>
                 <td>
-                    {% if subject.control == 'credit' %}
+                    {% if subject.control == 'none_control' %}
+                    Нет вида контроля
+                    {% elif subject.control == 'credit' %}
                     Зачёт
                     {% elif subject.control == 'exam' %}
                     Экзамен

@@ -16,8 +16,6 @@
                 font-size: 28px;
             }
 
-
-
             .teacher-field {
                 display: flex;
                 flex-wrap: wrap;
@@ -91,6 +89,7 @@
             <div class="form-group">
                 <label for="control">Вид контроля</label>
                 <select id="control" name="control" class="form-control" required>
+                    <option value="none_control" {% if (form_data and form_data['control'] == 'none_control') or (not form_data and subject.control == 'none_control') %}selected{% endif %}>Нет вида контроля</option>
                     <option value="credit" {% if (form_data and form_data['control'] == 'credit') or (not form_data and subject.control == 'credit') %}selected{% endif %}>Зачёт</option>
                     <option value="exam" {% if (form_data and form_data['control'] == 'exam') or (not form_data and subject.control == 'exam') %}selected{% endif %}>Экзамен</option>
                     <option value="differentiated_credit" {% if (form_data and form_data['control'] == 'differentiated_credit') or (not form_data and subject.control == 'differentiated_credit') %}selected{% endif %}>Дифференцированный зачёт</option>

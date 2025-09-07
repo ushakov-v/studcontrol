@@ -4,6 +4,7 @@ from models import db, Subject, Teacher, User, Request
 from get_current_semester import get_current_semester
 import re
 
+
 @login_required
 def add_subject_route():
     selected_semester = request.args.get('semester', type=int, default=1)
@@ -53,7 +54,9 @@ def add_subject_route():
         # Валидация часов
         if not re.match(r'^\d+$', hours):
             message = 'Количество часов должно содержать только цифры.'
-            return render_template('subject/add_subject.html', total_semesters=total_semesters, user_id=user.id, selected_semester=selected_semester, message=message, form_data=form_data, teachers_data=teachers_data, viewing_other_group=viewing_other_group)
+            return render_template('subject/add_subject.html', total_semesters=total_semesters, user_id=user.id,
+                                   selected_semester=selected_semester, message=message, form_data=form_data,
+                                   teachers_data=teachers_data, viewing_other_group=viewing_other_group)
 
         # Проверка на дублирующийся предмет для текущего пользователя
         existing_subject = Subject.query.filter_by(
@@ -62,7 +65,9 @@ def add_subject_route():
         ).first()
         if existing_subject:
             message = "Предмет с таким названием уже существует в этом семестре."
-            return render_template('subject/add_subject.html', total_semesters=total_semesters, user_id=user.id, selected_semester=selected_semester, message=message, form_data=form_data, teachers_data=teachers_data, viewing_other_group=viewing_other_group)
+            return render_template('subject/add_subject.html', total_semesters=total_semesters, user_id=user.id,
+                                   selected_semester=selected_semester, message=message, form_data=form_data,
+                                   teachers_data=teachers_data, viewing_other_group=viewing_other_group)
 
         # Валидация преподавателей
         i = 1
@@ -77,7 +82,9 @@ def add_subject_route():
             # Валидация имени преподавателя
             if not re.match(r'^[А-Яа-яЁё\s]+$', teacher_name):
                 message = f'Имя преподавателя {i} должно содержать только буквы русского алфавита.'
-                return render_template('subject/add_subject.html', total_semesters=total_semesters, user_id=user.id, selected_semester=selected_semester, message=message, form_data=form_data, teachers_data=teachers_data, viewing_other_group=viewing_other_group)
+                return render_template('subject/add_subject.html', total_semesters=total_semesters, user_id=user.id,
+                                       selected_semester=selected_semester, message=message, form_data=form_data,
+                                       teachers_data=teachers_data, viewing_other_group=viewing_other_group)
 
             teachers_data.append({
                 'name': teacher_name,
@@ -94,11 +101,14 @@ def add_subject_route():
 
         # Добавление преподавателей
         for teacher_data in teachers_data:
-            teacher = Teacher(name=teacher_data['name'], academic_degree=teacher_data['academic_degree'], academic_title=teacher_data['academic_title'],
+            teacher = Teacher(name=teacher_data['name'], academic_degree=teacher_data['academic_degree'],
+                              academic_title=teacher_data['academic_title'],
                               subject_id=subject.id)
             db.session.add(teacher)
 
         db.session.commit()
         return redirect(url_for('subject_list', user_id=user.id, semester=semester))
 
-    return render_template('subject/add_subject.html', total_semesters=total_semesters, user_id=user.id, form_data=form_data, teachers_data=teachers_data, selected_semester=selected_semester, viewing_other_group=viewing_other_group)
+    return render_template('subject/add_subject.html', total_semesters=total_semesters, user_id=user.id,
+                           form_data=form_data, teachers_data=teachers_data, selected_semester=selected_semester,
+                           viewing_other_group=viewing_other_group)

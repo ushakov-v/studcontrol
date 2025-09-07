@@ -153,6 +153,7 @@ def export_subject_attendance_route():
 
     # Перевод формы контроля
     control_map = {
+        'none_control': '',  # Пустая строка для случая "Нет вида контроля"
         'credit': 'Зачёт',
         'exam': 'Экзамен',
         'differentiated_credit': 'Дифференцированный зачёт',
@@ -263,7 +264,11 @@ def export_subject_attendance_route():
         'right': 1
     })
 
-    discipline_str = f"{subject.name} ({subject.hours} ч., {control_translation})"
+    # Формирование строки дисциплины с учетом отсутствия запятой при 'none'
+    if subject.control == 'none_control':
+        discipline_str = f"{subject.name} ({subject.hours} ч.)"
+    else:
+        discipline_str = f"{subject.name} ({subject.hours} ч., {control_translation})"
     discipline_height = max(15, (len(discipline_str) // 50 + 1) * 15)
     teacher_height = max(15, (len(teacher_str) // 50 + 1) * 15)
 

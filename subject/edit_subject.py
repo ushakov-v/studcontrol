@@ -4,6 +4,7 @@ from models import db, Subject, Teacher, User, Request
 from get_current_semester import get_current_semester
 import re
 
+
 @login_required
 def edit_subject_route(subject_id):
     subject = Subject.query.get_or_404(subject_id)
@@ -27,7 +28,8 @@ def edit_subject_route(subject_id):
 
     # Проверяем, что текущий пользователь является владельцем или администратором
     if subject.user_id != current_user.id and current_user.role != 'admin':
-        return render_template('error.html', message='У вас нет прав на редактирование этого предмета.', viewing_attendance_user=user)
+        return render_template('error.html', message='У вас нет прав на редактирование этого предмета.',
+                               viewing_attendance_user=user)
 
     viewing_other_group = current_user.id != user.id
 
@@ -58,7 +60,10 @@ def edit_subject_route(subject_id):
         # Валидация часов
         if not re.match(r'^\d+$', new_hours):
             error_message = 'Количество часов должно содержать только цифры.'
-            return render_template('subject/edit_subject.html', subject=subject, error_message=error_message, total_semesters=total_semesters, viewing_attendance_user=user, teachers_data=teachers_data, form_data=form_data, user_id=user.id, viewing_other_group=viewing_other_group, selected_semester=subject.semester)
+            return render_template('subject/edit_subject.html', subject=subject, error_message=error_message,
+                                   total_semesters=total_semesters, viewing_attendance_user=user,
+                                   teachers_data=teachers_data, form_data=form_data, user_id=user.id,
+                                   viewing_other_group=viewing_other_group, selected_semester=subject.semester)
 
         # Проверка на дублирующийся предмет
         existing_subject = Subject.query.filter(
@@ -73,7 +78,10 @@ def edit_subject_route(subject_id):
 
         if existing_subject:
             error_message = "Предмет с таким названием уже существует в этом семестре."
-            return render_template('subject/edit_subject.html', subject=subject, error_message=error_message, total_semesters=total_semesters, viewing_attendance_user=user, teachers_data=teachers_data, form_data=form_data, user_id=user.id, viewing_other_group=viewing_other_group, selected_semester=subject.semester)
+            return render_template('subject/edit_subject.html', subject=subject, error_message=error_message,
+                                   total_semesters=total_semesters, viewing_attendance_user=user,
+                                   teachers_data=teachers_data, form_data=form_data, user_id=user.id,
+                                   viewing_other_group=viewing_other_group, selected_semester=subject.semester)
 
         # Обновление данных предмета
         subject.name = new_name
@@ -123,4 +131,6 @@ def edit_subject_route(subject_id):
         db.session.commit()
         return redirect(url_for('subject_list', user_id=subject.user_id, semester=new_semester))
 
-    return render_template('subject/edit_subject.html', subject=subject, total_semesters=total_semesters, viewing_attendance_user=user, teachers_data=teachers_data, form_data=form_data, user_id=user.id, viewing_other_group=viewing_other_group, selected_semester=subject.semester)
+    return render_template('subject/edit_subject.html', subject=subject, total_semesters=total_semesters,
+                           viewing_attendance_user=user, teachers_data=teachers_data, form_data=form_data,
+                           user_id=user.id, viewing_other_group=viewing_other_group, selected_semester=subject.semester)

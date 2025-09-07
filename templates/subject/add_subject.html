@@ -98,6 +98,7 @@
             <div class="form-group">
                 <label for="control">Вид контроля</label>
                 <select id="control" name="control" class="form-control">
+                    <option value="none_control" {% if form_data and form_data['control'] == 'none_control' %}selected{% endif %}>Нет вида контроля</option>
                     <option value="credit" {% if form_data and form_data['control'] == 'credit' %}selected{% endif %}>Зачёт</option>
                     <option value="exam" {% if form_data and form_data['control'] == 'exam' %}selected{% endif %}>Экзамен</option>
                     <option value="differentiated_credit" {% if form_data and form_data['control'] == 'differentiated_credit' %}selected{% endif %}>Дифференцированный зачёт</option>
